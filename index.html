@@ -8,7 +8,8 @@
     
     <link rel="stylesheet" href="styles.css">
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#f2f2f7">
+    <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     
@@ -21,7 +22,8 @@
         <div id="toast-container"></div>
         
         <header id="top-bar">
-            <h1 id="header-title">Inicio</h1>
+            <!-- Título estructurado inyectado por JS -->
+            <div id="header-title"></div>
         </header>
 
         <main id="view-container">
@@ -44,15 +46,14 @@
                 <span class="label">Agenda</span>
             </button>
             <button class="nav-item" onclick="app.navigate('settings')">
-                <ion-icon class="icon" name="information-circle-outline"></ion-icon>
-                <span class="label">Info</span>
+                <ion-icon class="icon" name="cog-outline"></ion-icon>
+                <span class="label">Ajustes</span>
             </button>
         </nav>
     </div>
     
     <!-- Google Maps Places Autocomplete API -->
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA1kyQHoRHSILWjKbhFjzZtU_QQTmgNLlE&libraries=places"></script>
-    <script src="curriculum.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
