@@ -1,12 +1,13 @@
-const CACHE_NAME = 'discipulado-pwa-v1';
+const CACHE_NAME = 'sigueme-pwa-v2';
 const ASSETS = [
     './',
     './index.html',
     './styles.css',
     './app.js',
-    './curriculum.js',
     './manifest.json',
-    'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap'
+    './friends.png',
+    'https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js',
+    'https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js'
 ];
 
 self.addEventListener('install', event => {
@@ -25,7 +26,7 @@ self.addEventListener('fetch', event => {
                 return response;
             }
             return fetch(event.request).catch(() => {
-                // If offline and request fails, just return empty gracefully if possible
+                // Fail gracefully
             });
         })
     );
@@ -38,8 +39,8 @@ self.addEventListener('push', event => {
     const title = data.title || 'Recordatorio de Cita';
     const options = {
         body: data.body || 'Tienes un estudio próximo programado.',
-        icon: '/img/icons/icon-192x192.png',
-        badge: '/img/icons/icon-72x72.png',
+        icon: './friends.png',
+        badge: './friends.png',
         vibrate: [100, 50, 100],
         data: { url: data.url || '/' }
     };

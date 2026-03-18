@@ -154,6 +154,10 @@ const app = {
             });
         }
         
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js').catch(err => console.error('SW Error:', err));
+        }
+        
         if ('Notification' in window && navigator.serviceWorker) {
             if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
                 Notification.requestPermission();
