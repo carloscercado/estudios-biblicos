@@ -17,12 +17,22 @@ const DAILY_VERSES = [
     { text: "Pero, cuando venga el Espíritu Santo sobre ustedes, recibirán poder...", ref: "Hechos 1:8 (NVI)" }
 ];
 
-const URGENT_ACTIVITIES = [
-    "Comparte tu fe a través de tus redes sociales (Estado o Historia).",
-    "Invita a un vecino o amigo cercano a estudiar la biblia.",
-    "Comparte tu fe con algún compañero de trabajo o escuela.",
-    "Escribe un mensaje de ánimo espiritual a 3 contactos de tu teléfono.",
-    "Llama a alguien de la iglesia para animarle y orar juntos."
+const NO_APPT_SUGGESTIONS = [
+    "Ora a Dios para que te guíe a alguien que necesite escuchar el Evangelio hoy.",
+    "Comparte tu testimonio o un versículo en tus redes sociales para sembrar la Palabra.",
+    "Llama o escribe a un vecino para saludarlo y buscar una oportunidad de compartir.",
+    "En tu lugar de trabajo o estudio, busca un momento para animar a alguien con la fe.",
+    "Dedica un tiempo extra a interceder por las personas que tienes en pausa.",
+    "Escribe un mensaje de ánimo a 3 contactos que hace tiempo no saludas."
+];
+
+const HAS_APPT_SUGGESTIONS = [
+    "Recuerda que esta es una batalla espiritual; vístete con toda la armadura de Dios (Efesios 6:11).",
+    "Antes de tu cita, dedica 5 minutos a orar específicamente por el corazón de la persona.",
+    "Confía plenamente en el Señor; Él pondrá las palabras adecuadas en tu boca.",
+    "No temas, porque Dios está contigo en este tiempo de enseñanza.",
+    "Deja los resultados en las manos de Dios; tú solo siembra con amor.",
+    "La Palabra de Dios nunca vuelve vacía; ve con fe a compartir hoy."
 ];
 
 // --- Data Layer ---
@@ -63,6 +73,7 @@ const db = {
             person.location = '';
             person.appointmentType = 'ESTUDIO';
             person.appointmentStudyId = 1;
+            person.isFake = false;
             people.push(person);
         }
         this.set('people', people);
@@ -71,7 +82,7 @@ const db = {
         const p = this.getPerson(personId);
         if(p) {
             p.studies.push({ studyId, date: new Date().toISOString(), notes });
-            p.nextAppointment = null; // Clean up since met
+            p.nextAppointment = null; 
             this.savePerson(p);
         }
     },
@@ -82,6 +93,7 @@ const db = {
             p.location = location; 
             p.appointmentType = type;
             p.appointmentStudyId = studyId;
+            p.notified = false;
             this.savePerson(p); 
         }
     },
@@ -93,11 +105,22 @@ const db = {
         let people = this.getPeople();
         people = people.filter(p => p.id !== personId);
         this.set('people', people);
+    },
+    deleteFakeData() {
+        let people = this.getPeople();
+        people = people.filter(p => !p.isFake);
+        this.set('people', people);
     }
 };
 
 // --- Utilities ---
 const utils = {
+    getGreeting() {
+        const hour = new Date().getHours();
+        if (hour < 12) return { text: "Buenos días", emoji: "☀️" };
+        if (hour < 19) return { text: "Buenas tardes", emoji: "🌤️" };
+        return { text: "Buenas noches", emoji: "🌙" };
+    },
     formatDate(isoString) {
         if(!isoString) return 'Sin fecha';
         const d = new Date(isoString);
@@ -106,7 +129,7 @@ const utils = {
     formatTime(isoString) {
         if(!isoString) return '';
         const d = new Date(isoString);
-        return d.toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit' });
+        return d.toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit', hour12: true }).toUpperCase();
     },
     daysSince(isoString) {
         if(!isoString) return 999;
@@ -149,7 +172,8 @@ const app = {
                     nextAppointment: nextAppt ? new Date(nextAppt).toISOString() : null, 
                     location: nextAppt ? "Reunión por verificar" : "", 
                     appointmentType: 'ESTUDIO',
-                    appointmentStudyId: 1
+                    appointmentStudyId: 1,
+                    isFake: true
                 });
             });
         }
@@ -166,11 +190,48 @@ const app = {
         
         this.checkAutomations();
         this.navigate('dashboard');
+        
+        setInterval(() => this.checkAutomations(), 600000); // Check every 10 mins
     },
 
     checkAutomations() {
         const people = db.getPeople();
         let changed = false;
+        const now = new Date();
+        const todayStr = now.toDateString();
+
+        // Morning Notification (8 AM Mon-Fri | 9 AM Sat)
+        const day = now.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+        const lastMorning = localStorage.getItem('lastMorningNotificationDate');
+        
+        if (lastMorning !== todayStr) {
+            // Monday - Friday (8 AM) -> Prayer
+            if (day >= 1 && day <= 5 && now.getHours() >= 8) {
+                const candidates = people.filter(p => {
+                    if (p.status !== 'ACTIVO') return false;
+                    if (!p.nextAppointment) return true;
+                    const apptDate = new Date(p.nextAppointment);
+                    const diffDays = (apptDate - now) / (1000 * 60 * 60 * 24);
+                    return diffDays > 7; 
+                });
+                if (candidates.length > 0) {
+                    const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+                    this.showNotification('Tiempo de Oración', `Hoy aparta un tiempo para orar por ${chosen.name}. Dios puede poner algo en tu corazón para él/ella.`);
+                    localStorage.setItem('lastMorningNotificationDate', todayStr);
+                }
+            } 
+            // Saturday (9 AM) -> Spirit invitation
+            else if (day === 6 && now.getHours() >= 9) {
+                 const candidates = people.filter(p => p.status === 'ACTIVO');
+                 if (candidates.length > 0) {
+                    const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+                    const firstName = chosen.name.split(' ')[0];
+                    this.showNotification('Invitación Especial', `Mañana es un día especial para congregarnos. ¿Por qué no invitas a ${firstName} a unirse a la familia de fe? Será un gran tiempo juntos.`);
+                    localStorage.setItem('lastMorningNotificationDate', todayStr);
+                 }
+            }
+        }
+
         people.forEach(p => {
             // Automation: 24h passed, status ACTIVO, no history, no appointments -> PAUSA
             if (p.status === 'ACTIVO' && p.studies.length === 0 && !p.nextAppointment) {
@@ -178,18 +239,45 @@ const app = {
                     p.status = 'EN PAUSA';
                     db.savePerson(p);
                     changed = true;
-                    if ('Notification' in window && Notification.permission === 'granted' && navigator.serviceWorker) {
-                        navigator.serviceWorker.ready.then(reg => {
-                            reg.showNotification('Discipulado: Aviso Importante', {
-                                body: `${p.name} se movió a "EN PAUSA" porque pasaron 24h sin seguimiento. Agéndalo pronto.`,
-                                icon: '/icon-192x192.png'
-                            });
-                        });
+                    this.showNotification('Aviso Importante', `${p.name} se movió a "EN PAUSA" porque pasaron 24h sin seguimiento.`);
+                }
+            }
+
+            // Automation: Appointment in 1 hour
+            if (p.nextAppointment && !p.notified) {
+                const apptDate = new Date(p.nextAppointment);
+                const diffMs = apptDate - now;
+                const diffMins = Math.floor(diffMs / 60000);
+                
+                if (diffMins > 0 && diffMins <= 60) {
+                    let studyInfo = "";
+                    if (p.appointmentType === 'ESTUDIO' && p.appointmentStudyId) {
+                        const curr = db.getCurriculum();
+                        const s = curr.find(x => x.id === p.appointmentStudyId);
+                        if(s) studyInfo = ` para el estudio de "${s.title}"`;
                     }
+                    const msg = `En 1 hora verás a ${p.name}${studyInfo}. Detente un momento y pide a Dios sabiduría para enseñar con amor.`;
+                    
+                    this.showNotification('Recordatorio de Cita', msg);
+                    p.notified = true; 
+                    db.savePerson(p);
+                    changed = true;
                 }
             }
         });
         if(changed && this.currentView === 'people') this.navigate('people');
+    },
+
+    showNotification(title, body) {
+        if ('Notification' in window && Notification.permission === 'granted' && navigator.serviceWorker) {
+            navigator.serviceWorker.ready.then(reg => {
+                reg.showNotification(title, {
+                    body,
+                    icon: './friends.png',
+                    badge: './friends.png'
+                });
+            });
+        }
     },
 
     navigate(view, data = null) {
@@ -218,12 +306,12 @@ const app = {
         container.innerHTML = views[view] ? views[view](data) : '<h1>404</h1>';
         window.scrollTo(0,0);
         
-        // Removed google maps logic
+        this.checkAutomations();
     },
     
     getTitle(view) {
         const titles = { 
-            dashboard: { name: 'Inicio', icon: 'home' },
+            dashboard: { name: 'Sigueme', icon: 'home' },
             people: { name: 'Personas', icon: 'people' },
             'add-person': { name: 'Nueva Persona', icon: 'person-add' },
             agenda: { name: 'Agenda', icon: 'calendar' },
@@ -276,7 +364,6 @@ const app = {
 
             if(!datetime) return app.showToast('Elige fecha y hora');
 
-            // Prevent appointment collision
             const targetIso = new Date(datetime).toISOString();
             const targetStr = targetIso.slice(0, 16);
             const clash = db.getPeople().find(p => p.id !== personId && p.nextAppointment && p.nextAppointment.slice(0, 16) === targetStr);
@@ -286,16 +373,6 @@ const app = {
 
             db.setNextAppointment(personId, targetIso, location, type, studyId);
             
-            // Notification
-            if ('Notification' in window && Notification.permission === 'granted' && navigator.serviceWorker) {
-                navigator.serviceWorker.ready.then(reg => {
-                    reg.showNotification('Cita programada', {
-                        body: `Cita (${type}) con ${db.getPerson(personId).name} a las ${utils.formatTime(new Date(datetime))} en ${location || 'ubicación pte.'}.`,
-                        icon: '/icon-192x192.png'
-                    });
-                });
-            }
-
             app.showToast('Cita guardada correctamente');
             if(app.currentView !== 'agenda') app.navigate('detail', personId);
             else app.navigate('agenda');
@@ -318,6 +395,13 @@ const app = {
                 app.navigate('people');
             }
         },
+        deleteFakeData() {
+            if(confirm('¿Eliminar todos los datos de prueba iniciales? Tus registros reales se mantendrán.')) {
+                db.deleteFakeData();
+                app.showToast('Datos de prueba eliminados.');
+                app.navigate('settings');
+            }
+        },
         addStudySetting() {
             const title = document.getElementById('set-study-title').value.trim();
             if(!title) return;
@@ -331,7 +415,6 @@ const app = {
 // --- View Renderers ---
 const views = {
     dashboard() {
-        // Dynamic Verse
         let storedIndex = parseInt(localStorage.getItem('dailyVerseIndex') || 0);
         let storedDate = localStorage.getItem('dailyVerseDate');
         const todayStr = new Date().toDateString();
@@ -343,31 +426,32 @@ const views = {
         const verse = DAILY_VERSES[storedIndex] || DAILY_VERSES[0];
         
         const people = db.getPeople();
+        const activePeople = people.filter(p => p.status === 'ACTIVO');
         let todayAppointments = 0;
 
         people.forEach(p => {
             if(p.nextAppointment && new Date(p.nextAppointment).toDateString() === new Date().toDateString()) todayAppointments++;
         });
 
-        // Urgent Actions (Evangelism Recommendations) if no appointments today
-        let urgentHtml = '';
-        if(todayAppointments === 0) {
-            let urgentTaskIndex = parseInt(localStorage.getItem('urgentTaskIndex') || 0);
-            if(storedDate !== todayStr) {
-                urgentTaskIndex = Math.floor(Math.random() * URGENT_ACTIVITIES.length);
-                localStorage.setItem('urgentTaskIndex', urgentTaskIndex);
-            }
-            urgentHtml = `
-            <div class="section-title">Atención Urgente <span class="badge urgent">!</span></div>
-            <div class="card" style="border-left: 4px solid var(--danger); background: var(--danger-light);">
-                <div style="font-weight:700; color:var(--danger); margin-bottom:8px; font-size:14px;">No hay citas agendadas hoy.</div>
-                <div style="font-size:15px; color:var(--text-main); font-weight:500;">
-                    ${URGENT_ACTIVITIES[urgentTaskIndex]}
-                </div>
-            </div>`;
-        } else {
-            urgentHtml = `<div class="card" style="text-align:center; padding: 24px; color:var(--text-muted); font-size:14px;">¡Excelente! Tienes citas para hoy.</div>`;
+        let suggestionHtml = '';
+        let suggestionList = todayAppointments === 0 ? NO_APPT_SUGGESTIONS : HAS_APPT_SUGGESTIONS;
+        let suggestionTitle = todayAppointments === 0 ? 'Sugerencia de acción' : 'Ánimo para hoy';
+        let accentColor = todayAppointments === 0 ? 'var(--warning)' : 'var(--success)';
+        let bgColor = todayAppointments === 0 ? 'var(--accent-light)' : '#d4edda';
+
+        let suggestionIndex = parseInt(localStorage.getItem('suggestionIndex') || 0);
+        if(storedDate !== todayStr) {
+            suggestionIndex = Math.floor(Math.random() * suggestionList.length);
+            localStorage.setItem('suggestionIndex', suggestionIndex);
         }
+        
+        suggestionHtml = `
+        <div class="section-title">${suggestionTitle}</div>
+        <div class="card" style="border-left: 4px solid ${accentColor}; background: ${bgColor};">
+            <div style="font-size:15px; color:var(--text-main); font-weight:500;">
+                ${suggestionList[suggestionIndex]}
+            </div>
+        </div>`;
 
         return `
             <div class="verse-card">
@@ -377,8 +461,8 @@ const views = {
 
             <div style="display:flex; gap: 12px; margin: 20px 0;">
                 <div class="card" style="flex:1; margin:0; text-align:center;">
-                   <div style="font-size:26px; font-weight:700; color:var(--accent)">${people.length}</div>
-                   <div style="font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase;">Totales</div>
+                   <div style="font-size:26px; font-weight:700; color:var(--accent)">${activePeople.length}</div>
+                   <div style="font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase;">Activos</div>
                 </div>
                 <div class="card" style="flex:1; margin:0; text-align:center;">
                    <div style="font-size:26px; font-weight:700; color:var(--success)">${todayAppointments}</div>
@@ -386,7 +470,7 @@ const views = {
                 </div>
             </div>
 
-            ${urgentHtml}
+            ${suggestionHtml}
         `;
     },
     
@@ -398,8 +482,10 @@ const views = {
          const curriculumCache = db.getCurriculum();
          people.sort((a,b) => new Date(b.startDate) - new Date(a.startDate));
          
-         html += people.map(p => `
-             <div class="person-item" onclick="app.navigate('detail', '${p.id}')">
+         html += people.map(p => {
+             const statusClass = p.status === 'TERMINADO' ? 'status-terminado' : (p.status === 'CANCELADO' ? 'status-cancelado' : '');
+             return `
+             <div class="person-item ${statusClass}" onclick="app.navigate('detail', '${p.id}')">
                  <div class="person-avatar">${p.name.charAt(0).toUpperCase()}</div>
                  <div class="person-info">
                      <div class="person-name">${p.name}</div>
@@ -407,7 +493,7 @@ const views = {
                  </div>
                  <ion-icon name="chevron-forward" style="color:var(--text-muted); font-size:18px;"></ion-icon>
              </div>
-         `).join('');
+         `}).join('');
          return html;
     },
 
@@ -422,7 +508,6 @@ const views = {
                 <label class="form-label">WhatsApp o Teléfono</label>
                 <input type="tel" id="p-phone" class="form-input" placeholder="+52 1 234 567 8900">
              </div>
-             <!-- Status hidden, auto set to ACTIVE per requirements -->
              <button class="btn-primary" onclick="app.handlers.saveNewPerson()">Guardar Perfil</button>
           </div>
        `;
@@ -433,6 +518,8 @@ const views = {
         if(!p) return `<div>Error</div>`;
         const nextStudy = utils.getNextStudy(p);
         const curr = db.getCurriculum();
+        const firstName = p.name.split(' ')[0];
+        const greeting = utils.getGreeting();
 
         return `
             <div class="card" style="display:flex; align-items:center; margin-bottom: 20px;">
@@ -443,22 +530,20 @@ const views = {
                     <h2 style="font-size:20px; font-weight:600; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.name}</h2>
                     <div style="font-size:14px; font-weight:600; color:var(--text-muted); text-transform:uppercase;">Estado: ${p.status}</div>
                 </div>
-                <button class="whatsapp-btn" onclick="app.handlers.openWhatsApp('${p.phone}')"><ion-icon name="logo-whatsapp"></ion-icon></button>
+                <button class="whatsapp-btn" onclick="app.handlers.openWhatsApp('${p.phone}', 'Hola ${firstName}...')"><ion-icon name="logo-whatsapp"></ion-icon></button>
             </div>
 
-            <!-- Sugerencia iOS Style -->
             <div class="card" style="background:var(--accent-light); border:0; padding:16px;">
                 <div style="font-weight:600; font-size:13px; color:var(--accent); margin-bottom:6px; text-transform:uppercase;">Próximo Paso Sugerido</div>
                 ${nextStudy 
                     ? `<p style="font-size:15px; margin-bottom: 12px; font-weight:500;">Estudiar: <strong>${nextStudy.title}</strong></p>
-                       <button onclick="app.handlers.openWhatsApp('${p.phone}', 'Hola ${p.name.split(' ')[0]}, ¿listo para nuestro próximo estudio: ${nextStudy.title}?')" style="background:var(--bg-secondary); border:0; color:var(--accent); padding:10px 16px; border-radius:10px; font-size:15px; font-weight:600; width:100%;">Enviar Mensaje para Agendar</button>`
+                       <button onclick="app.handlers.openWhatsApp('${p.phone}', 'Hola ${firstName}, ${greeting.text} ${greeting.emoji}. ¿Cómo estás?')" style="background:var(--bg-secondary); border:0; color:var(--accent); padding:10px 16px; border-radius:10px; font-size:15px; font-weight:600; width:100%;">Enviar Mensaje para Agendar</button>`
                     : `<p style="font-size:15px; margin-bottom: 0; font-weight:500;">¡Ha completado todo el currículo base!</p>`
                 }
             </div>
             
             <button class="btn-primary" style="margin-bottom:20px;" onclick="app.navigate('newsession', '${p.id}')"><ion-icon name="pencil"></ion-icon> Registrar un tiempo</button>
 
-            <!-- Historial -->
             <div class="section-title">Historial</div>
             ${p.studies.length === 0 ? `<div class="card text-center" style="color:var(--text-muted);">Sin tiempos registrados.</div>` : 
               [...p.studies].reverse().map(s => {
@@ -475,7 +560,6 @@ const views = {
               }).join('')
             }
 
-            <!-- Agenda -->
             <div class="section-title">Agendar Próxima</div>
             <div class="card" id="detail-agenda-card">
                 ${p.nextAppointment ? `<div style="margin-bottom:14px; padding-bottom:14px; border-bottom:1px solid var(--glass-border); font-size:14px;"><strong>Cita actual (${p.appointmentType}):</strong> ${utils.formatDate(p.nextAppointment)} - ${utils.formatTime(p.nextAppointment)}<br><span style="color:var(--text-muted); font-size:13px;"><ion-icon name="location-outline" style="vertical-align:middle;"></ion-icon> ${p.location||'Sin ubicación'}</span></div>` : ''}
@@ -554,12 +638,14 @@ const views = {
                 const sItem = curr.find(x => x.id === item.p.appointmentStudyId);
                 aptDetails += sItem ? ` (${sItem.title})` : '';
             }
+            const firstName = item.p.name.split(' ')[0];
+            const timeStr = utils.formatTime(item.date);
             
             return `
             <div class="card" style="border-left: 4px solid ${accent}" onclick="app.navigate('detail', '${item.p.id}')">
                 <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
                     <strong style="font-size:16px;">${item.p.name}</strong>
-                    <span style="font-size:13px; font-weight:600; color:${accent}">${utils.formatDate(item.date)} ${utils.formatTime(item.date)}</span>
+                    <span style="font-size:13px; font-weight:600; color:${accent}">${utils.formatDate(item.date)} ${timeStr}</span>
                 </div>
                 <div style="font-size:13px; color:var(--text-main); font-weight:500; margin-bottom:4px;">
                     ${aptDetails}
@@ -568,8 +654,7 @@ const views = {
                     <ion-icon name="location-outline" style="vertical-align:text-bottom;"></ion-icon> ${item.p.location || 'Por definir'}
                 </div>
                 <div style="display:flex; gap:10px;">
-                    <button class="btn-primary" style="background:${accent}; padding:8px; font-size:13px;" onclick="event.stopPropagation(); app.handlers.openWhatsApp('${item.p.phone}', 'Hola, nos vemos en nuestra cita de ${item.p.appointmentType}: ${item.p.location||''}')"><ion-icon name="logo-whatsapp"></ion-icon> Avisar</button>
-                    <!-- Editar abre la ficha y hace foco en la agenda -->
+                    <button class="btn-primary" style="background:${accent}; padding:8px; font-size:13px;" onclick="event.stopPropagation(); app.handlers.openWhatsApp('${item.p.phone}', 'Hola ${firstName}, nos vemos en nuestro tiempo a las ${timeStr}.')"><ion-icon name="logo-whatsapp"></ion-icon> Avisar</button>
                     <button class="btn-primary" style="background:var(--bg-primary); color:var(--text-main); padding:8px; font-size:13px;" onclick="event.stopPropagation(); app.navigate('detail', '${item.p.id}'); setTimeout(()=>document.getElementById('detail-agenda-card').scrollIntoView(), 100);"><ion-icon name="pencil-outline"></ion-icon> Editar</button>
                 </div>
             </div>`
@@ -582,10 +667,11 @@ const views = {
         return `
             <div class="card text-center" style="padding:20px;">
                 <ion-icon name="book" style="font-size:48px; color:var(--accent); margin-bottom:16px;"></ion-icon>
-                <h2 style="font-size:20px; font-weight:600; margin-bottom:8px;">Ajustes de la App</h2>
+                <h2 style="font-size:20px; font-weight:600; margin-bottom:8px;">Ajustes de Sigueme</h2>
                 <div style="margin-top:16px; text-align:left; font-size:14px; line-height:1.5;">
-                    PWA instalable - Versión Offline.<br><br>
-                    <strong>Para instalar:</strong> Toca Compartir > Añadir a Inicio.
+                    <strong>PWA instalable:</strong><br>
+                    Para instalar en Android: Toca el menú de 3 puntos (⋮) en Chrome y selecciona <strong>"Instalar aplicación"</strong>.<br><br>
+                    Para iOS: Toca el botón <strong>Compartir</strong> > <strong>Añadir a pantalla de inicio</strong>.
                 </div>
             </div>
             
@@ -606,13 +692,20 @@ const views = {
             </div>
 
             <div class="card" style="margin-top:40px; text-align:center; background:var(--danger-light);">
-                <div style="color:var(--danger); font-weight:600; margin-bottom:12px; font-size:14px;">Zona de Peligro</div>
-                <button class="btn-primary btn-danger" style="background:var(--danger); color:white;" onclick="if(confirm('¿Estás SEGURO de borrar toda la información? Todos los perfiles, citas y datos locales se perderán para siempre.')) { localStorage.clear(); window.location.reload(); }">
-                    <ion-icon name="trash"></ion-icon> Borrar Todo (Data Fake)
+                <div style="color:var(--danger); font-weight:600; margin-bottom:12px; font-size:14px;">Zona de Datos de Prueba</div>
+                <button class="btn-primary btn-danger" style="background:var(--danger); color:white;" onclick="app.handlers.deleteFakeData()">
+                    <ion-icon name="trash"></ion-icon> Borrar Datos FAKE (Prueba)
+                </button>
+                <p style="font-size:11px; margin-top:8px; color:var(--danger);">Esto solo eliminará los 5 perfiles iniciales de ejemplo.</p>
+            </div>
+
+             <div class="card" style="margin-top:20px; text-align:center;">
+                <button class="btn-primary btn-danger" style="background:transparent; color:var(--danger); border: 1px solid var(--danger); box-shadow:none;" onclick="if(confirm('¿Estás SEGURO de borrar TODO? Se perderán tus datos reales también.')) { localStorage.clear(); window.location.reload(); }">
+                    <ion-icon name="alert-circle"></ion-icon> Borrar TODO (Reset Total)
                 </button>
             </div>
             `;
     }
-}
+};
 
 document.addEventListener('DOMContentLoaded', () => app.init());
