@@ -89,12 +89,12 @@ body {
 /* Bottom Nav iOS */
 #bottom-nav {
   flex-shrink: 0; /* Part of layout, prevents overlap */
-  width: 100%; height: var(--nav-height);
+  width: 100%; 
   background: var(--glass-bg); backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   border-top: 0.5px solid var(--glass-border);
-  display: flex; justify-content: space-around; padding-top: 8px;
-  padding-bottom: max(16px, env(safe-area-inset-bottom));
+  display: flex; justify-content: space-around; padding-top: 10px;
+  padding-bottom: calc(20px + env(safe-area-inset-bottom));
   z-index: 20;
 }
 
