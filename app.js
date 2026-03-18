@@ -10,11 +10,11 @@ const DEFAULT_CURRICULUM = [
 ];
 
 const DAILY_VERSES = [
-    { text: "Por tanto, id, y haced discípulos a todas las naciones...", ref: "Mateo 28:19" },
-    { text: "Porque no me avergüenzo del evangelio, porque es poder de Dios...", ref: "Romanos 1:16" },
-    { text: "Id por todo el mundo y predicad el evangelio a toda criatura.", ref: "Marcos 16:15" },
-    { text: "Cómo, pues, invocarán a aquel en el cual no han creído?...", ref: "Romanos 10:14" },
-    { text: "Pero recibiréis poder, cuando haya venido sobre vosotros el Espíritu Santo...", ref: "Hechos 1:8" }
+    { text: "Por tanto, vayan y hagan discípulos de todas las naciones...", ref: "Mateo 28:19 (NVI)" },
+    { text: "A la verdad, no me avergüenzo del evangelio, pues es poder de Dios...", ref: "Romanos 1:16 (NVI)" },
+    { text: "Vayan por todo el mundo y anuncien las buenas nuevas a toda criatura.", ref: "Marcos 16:15 (NVI)" },
+    { text: "Ahora bien, ¿cómo invocarán a aquel en quien no han creído?...", ref: "Romanos 10:14 (NVI)" },
+    { text: "Pero, cuando venga el Espíritu Santo sobre ustedes, recibirán poder...", ref: "Hechos 1:8 (NVI)" }
 ];
 
 const URGENT_ACTIVITIES = [
