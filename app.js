@@ -506,7 +506,7 @@ const views = {
             </div>
             
             <div style="margin-top:40px; border-top: 1px solid var(--glass-border); padding-top:20px; padding-bottom: 20px;">
-                <button class="btn-primary btn-danger" style="background:var(--danger); color:white; margin-bottom:12px;" onclick="if(confirm('¿Confirmas que deseas clasificar a esta persona como abandono de estudios?')) app.handlers.changeStatus('${p.id}', 'CANCELADO')">Abandonó los estudios</button>
+                ${p.status !== 'CANCELADO' ? `<button class="btn-primary btn-danger" style="background:var(--danger); color:white; margin-bottom:12px;" onclick="if(confirm('¿Confirmas que deseas clasificar a esta persona como abandono de estudios?')) app.handlers.changeStatus('${p.id}', 'CANCELADO')">Abandonó los estudios</button>` : ''}
                 <button class="btn-primary btn-danger" style="background:transparent; color:var(--danger); box-shadow:none; border: 1px solid var(--danger);" onclick="app.handlers.deletePerson('${p.id}')">Eliminar Persona</button>
             </div>
         `;
