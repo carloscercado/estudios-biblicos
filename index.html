@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="description" content="Sistema de Gestión de Discipulado">
+    <title>Discipulado iOS</title>
+    
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#f2f2f7">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    
+    <!-- Ionicons para iconografía idéntica a iOS -->
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</head>
+<body>
+    <div id="app-container">
+        <div id="toast-container"></div>
+        
+        <header id="top-bar">
+            <h1 id="header-title">Inicio</h1>
+        </header>
+
+        <main id="view-container">
+        </main>
+        
+        <nav id="bottom-nav">
+            <button class="nav-item active" onclick="app.navigate('dashboard')">
+                <ion-icon class="icon" name="home-outline"></ion-icon>
+                <span class="label">Inicio</span>
+            </button>
+            <button class="nav-item" onclick="app.navigate('people')">
+                <ion-icon class="icon" name="people-outline"></ion-icon>
+                <span class="label">Personas</span>
+            </button>
+            <button class="nav-item add-fab" onclick="app.navigate('add-person')">
+                <ion-icon class="icon" name="add"></ion-icon>
+            </button>
+            <button class="nav-item" onclick="app.navigate('agenda')">
+                <ion-icon class="icon" name="calendar-outline"></ion-icon>
+                <span class="label">Agenda</span>
+            </button>
+            <button class="nav-item" onclick="app.navigate('settings')">
+                <ion-icon class="icon" name="information-circle-outline"></ion-icon>
+                <span class="label">Info</span>
+            </button>
+        </nav>
+    </div>
+    
+    <!-- Google Maps Places Autocomplete API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA1kyQHoRHSILWjKbhFjzZtU_QQTmgNLlE&libraries=places"></script>
+    <script src="curriculum.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

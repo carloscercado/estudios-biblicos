@@ -1,0 +1,22 @@
+{
+  "name": "Discipulado PWA",
+  "short_name": "Discipulado",
+  "description": "Sistema de Gestión de Estudios Bíblicos",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3034/3034085.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3034/3034085.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
