@@ -1,7 +1,7 @@
 {
-  "name": "crystal-meteoroid",
+  "name": "sigueme",
   "version": "1.0.0",
-  "description": "PWA para discipulado",
+  "description": "PWA Sigueme",
   "main": "app.js",
   "scripts": {
     "serve": "serve -s . -l 3000"

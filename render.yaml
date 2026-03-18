@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: crystal-meteoroid
+    name: sigueme
     env: static
     buildCommand: npm install
     staticPublishPath: .
