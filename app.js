@@ -62,6 +62,7 @@ const db = {
             person.nextAppointment = null;
             person.location = '';
             person.appointmentType = 'ESTUDIO';
+            person.appointmentStudyId = 1;
             people.push(person);
         }
         this.set('people', people);
@@ -74,18 +75,24 @@ const db = {
             this.savePerson(p);
         }
     },
-    setNextAppointment(personId, datetime, location = '', type = 'ESTUDIO') {
+    setNextAppointment(personId, datetime, location = '', type = 'ESTUDIO', studyId = null) {
         const p = this.getPerson(personId);
         if(p) { 
             p.nextAppointment = datetime; 
             p.location = location; 
             p.appointmentType = type;
+            p.appointmentStudyId = studyId;
             this.savePerson(p); 
         }
     },
     changeStatus(personId, newStatus) {
         const p = this.getPerson(personId);
         if(p) { p.status = newStatus; this.savePerson(p); }
+    },
+    deletePerson(personId) {
+        let people = this.getPeople();
+        people = people.filter(p => p.id !== personId);
+        this.set('people', people);
     }
 };
 
@@ -120,7 +127,31 @@ const app = {
     
     init() {
         if(db.getPeople().length === 0) {
-            db.savePerson({ id: "101", name: "Ana López", phone: "5551234567", startDate: new Date(Date.now() - 30 * 86400000).toISOString(), status: 'ACTIVO', studies: [ { studyId: 1, date: new Date(Date.now() - 2 * 86400000).toISOString(), notes: "" } ], nextAppointment: new Date(Date.now() + 2 * 86400000).toISOString(), location: "Cafetería Central", appointmentType: 'ESTUDIO' });
+            const names = ["Carlos Mendoza", "Lucía Fernanda", "Jorge Ramírez", "Sofía Vargas", "Mateo Silva"];
+            const msInDay = 86400000;
+            const now = Date.now();
+            names.forEach((name, i) => {
+                const id = "10" + i;
+                let stat = 'ACTIVO';
+                let nextAppt = null;
+                let pastDays = 5;
+                if(i === 0) nextAppt = new Date(now + msInDay).toISOString().slice(0,16);
+                if(i === 1) nextAppt = new Date(now + msInDay * 2).toISOString().slice(0,16);
+                if(i === 2) { nextAppt = null; stat = 'EN PAUSA'; pastDays = 10; }
+                if(i === 3) nextAppt = new Date(now + 3600000).toISOString().slice(0,16); 
+                if(i === 4) { nextAppt = null; stat = 'CANCELADO'; }
+                
+                db.savePerson({ 
+                    id, name, phone: "555000000" + i, 
+                    startDate: new Date(now - pastDays * msInDay).toISOString(), 
+                    status: stat, 
+                    studies: [], 
+                    nextAppointment: nextAppt ? new Date(nextAppt).toISOString() : null, 
+                    location: nextAppt ? "Reunión por verificar" : "", 
+                    appointmentType: 'ESTUDIO',
+                    appointmentStudyId: 1
+                });
+            });
         }
         
         if ('Notification' in window && navigator.serviceWorker) {
@@ -183,10 +214,7 @@ const app = {
         container.innerHTML = views[view] ? views[view](data) : '<h1>404</h1>';
         window.scrollTo(0,0);
         
-        const locationInput = document.getElementById('a-location');
-        if (locationInput && window.google && google.maps && google.maps.places) {
-            new google.maps.places.Autocomplete(locationInput, { fields: ["formatted_address", "name"], types: ["geocode", "establishment"] });
-        }
+        // Removed google maps logic
     },
     
     getTitle(view) {
@@ -227,7 +255,6 @@ const app = {
         saveSession(personId) {
             const studyId = document.getElementById('s-study').value;
             const notes = document.getElementById('s-notes').value.trim();
-            // studyId 0 acts as "Just encouragement / no study lesson"
             const numStudyId = parseInt(studyId);
             db.addStudyRecord(personId, isNaN(numStudyId) ? 0 : numStudyId, notes);
             app.showToast('Tiempo registrado con éxito');
@@ -237,8 +264,23 @@ const app = {
             const datetime = document.getElementById('a-datetime').value;
             const location = document.getElementById('a-location').value.trim();
             const type = document.getElementById('a-type').value;
+            let studyId = null;
+            if(type === 'ESTUDIO') {
+                const sEl = document.getElementById('a-study');
+                if(sEl) studyId = parseInt(sEl.value);
+            }
+
             if(!datetime) return app.showToast('Elige fecha y hora');
-            db.setNextAppointment(personId, new Date(datetime).toISOString(), location, type);
+
+            // Prevent appointment collision
+            const targetIso = new Date(datetime).toISOString();
+            const targetStr = targetIso.slice(0, 16);
+            const clash = db.getPeople().find(p => p.id !== personId && p.nextAppointment && p.nextAppointment.slice(0, 16) === targetStr);
+            if(clash) {
+                return app.showToast(`Hora ya ocupada por ${clash.name}.`);
+            }
+
+            db.setNextAppointment(personId, targetIso, location, type, studyId);
             
             // Notification
             if ('Notification' in window && Notification.permission === 'granted' && navigator.serviceWorker) {
@@ -257,7 +299,6 @@ const app = {
         openWhatsApp(phone, message = '') {
             const clean = utils.cleanPhone(phone);
             const url = `https://wa.me/${clean}?text=${encodeURIComponent(message)}`;
-            // Bug Fix: replace window.open(url, '_blank') with window.location.href
             window.location.href = url;
         },
         changeStatus(personId, value) {
@@ -265,6 +306,13 @@ const app = {
             db.changeStatus(personId, value);
             app.showToast('Estado actualizado a ' + value);
             app.navigate('detail', personId);
+        },
+        deletePerson(personId) {
+            if(confirm('¿Estás seguro de eliminar a esta persona? Todo su progreso será destruido.')) {
+                db.deletePerson(personId);
+                app.showToast('Persona eliminada permanentemente.');
+                app.navigate('people');
+            }
         },
         addStudySetting() {
             const title = document.getElementById('set-study-title').value.trim();
@@ -389,13 +437,7 @@ const views = {
                 </div>
                 <div style="flex:1; margin-left:14px; overflow:hidden;">
                     <h2 style="font-size:20px; font-weight:600; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.name}</h2>
-                    <select class="form-select" style="padding:4px 8px; font-size:12px; width:auto; border:0; background:var(--accent-light); color:var(--accent);" onchange="app.handlers.changeStatus('${p.id}', this.value)">
-                        <option disabled>Cambiar Estado</option>
-                        <option value="ACTIVO" ${p.status==='ACTIVO'?'selected':''}>Activo</option>
-                        <option value="EN PAUSA" ${p.status==='EN PAUSA'?'selected':''}>En Pausa</option>
-                        <option value="CANCELADO" ${p.status==='CANCELADO'?'selected':''}>Cancelado (Abandonó)</option>
-                        <option value="TERMINADO" ${p.status==='TERMINADO'?'selected':''}>Terminado</option>
-                    </select>
+                    <div style="font-size:14px; font-weight:600; color:var(--text-muted); text-transform:uppercase;">Estado: ${p.status}</div>
                 </div>
                 <button class="whatsapp-btn" onclick="app.handlers.openWhatsApp('${p.phone}')"><ion-icon name="logo-whatsapp"></ion-icon></button>
             </div>
@@ -435,11 +477,19 @@ const views = {
                 ${p.nextAppointment ? `<div style="margin-bottom:14px; padding-bottom:14px; border-bottom:1px solid var(--glass-border); font-size:14px;"><strong>Cita actual (${p.appointmentType}):</strong> ${utils.formatDate(p.nextAppointment)} - ${utils.formatTime(p.nextAppointment)}<br><span style="color:var(--text-muted); font-size:13px;"><ion-icon name="location-outline" style="vertical-align:middle;"></ion-icon> ${p.location||'Sin ubicación'}</span></div>` : ''}
                 <div class="form-group">
                     <label class="form-label">Tipo de Cita</label>
-                    <select id="a-type" class="form-select">
+                    <select id="a-type" class="form-select" onchange="document.getElementById('a-study-container').style.display = this.value === 'ESTUDIO' ? 'block':'none'">
                         <option value="ESTUDIO" ${p.appointmentType==='ESTUDIO'?'selected':''}>Estudio Bíblico</option>
                         <option value="TIEMPO DE ÁNIMO" ${p.appointmentType==='TIEMPO DE ÁNIMO'?'selected':''}>Tiempo de Ánimo</option>
                     </select>
                 </div>
+                
+                <div id="a-study-container" class="form-group" style="display:${p.appointmentType==='ESTUDIO'?'block':'none'};">
+                     <label class="form-label">Lección a impartir</label>
+                     <select id="a-study" class="form-select">
+                        ${curr.map(c => `<option value="${c.id}" ${p.appointmentStudyId==c.id?'selected':''}>${c.title}</option>`).join('')}
+                     </select>
+                </div>
+
                 <div class="form-group">
                     <label class="form-label">Fecha y Hora</label>
                     <input type="datetime-local" id="a-datetime" class="form-input" value="${p.nextAppointment ? p.nextAppointment.slice(0,16) : ''}">
@@ -449,6 +499,11 @@ const views = {
                     <input type="text" id="a-location" class="form-input" placeholder="Ej. Cafetería, Zoom..." value="${p.location}">
                 </div>
                 <button class="btn-primary" style="padding:12px; font-size:15px;" onclick="app.handlers.saveAppointment('${p.id}')">Guardar Cita</button>
+            </div>
+            
+            <div style="margin-top:40px; border-top: 1px solid var(--glass-border); padding-top:20px; padding-bottom: 20px;">
+                <button class="btn-primary btn-danger" style="background:var(--danger); color:white; margin-bottom:12px;" onclick="if(confirm('¿Confirmas que deseas clasificar a esta persona como abandono de estudios?')) app.handlers.changeStatus('${p.id}', 'CANCELADO')">Abandonó los estudios</button>
+                <button class="btn-primary btn-danger" style="background:transparent; color:var(--danger); box-shadow:none; border: 1px solid var(--danger);" onclick="app.handlers.deletePerson('${p.id}')">Eliminar Persona</button>
             </div>
         `;
     },
@@ -485,9 +540,17 @@ const views = {
         let html = `<div class="section-title">Calendario</div>`;
         if(items.length===0) return html + `<div class="card text-center">Sin eventos agendados.</div>`;
 
+        const curr = db.getCurriculum();
+
         html += items.map(item => {
             const isPast = item.date < new Date();
             const accent = isPast ? 'var(--danger)' : 'var(--accent)';
+            let aptDetails = item.p.appointmentType;
+            if (item.p.appointmentType === 'ESTUDIO' && item.p.appointmentStudyId) {
+                const sItem = curr.find(x => x.id === item.p.appointmentStudyId);
+                aptDetails += sItem ? ` (${sItem.title})` : '';
+            }
+            
             return `
             <div class="card" style="border-left: 4px solid ${accent}" onclick="app.navigate('detail', '${item.p.id}')">
                 <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
@@ -495,7 +558,7 @@ const views = {
                     <span style="font-size:13px; font-weight:600; color:${accent}">${utils.formatDate(item.date)} ${utils.formatTime(item.date)}</span>
                 </div>
                 <div style="font-size:13px; color:var(--text-main); font-weight:500; margin-bottom:4px;">
-                    ${item.p.appointmentType}
+                    ${aptDetails}
                 </div>
                 <div style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">
                     <ion-icon name="location-outline" style="vertical-align:text-bottom;"></ion-icon> ${item.p.location || 'Por definir'}
@@ -536,6 +599,13 @@ const views = {
                     </div>
                     <button class="btn-primary" style="padding:10px;" onclick="app.handlers.addStudySetting()">Agregar Estudio</button>
                 </div>
+            </div>
+
+            <div class="card" style="margin-top:40px; text-align:center; background:var(--danger-light);">
+                <div style="color:var(--danger); font-weight:600; margin-bottom:12px; font-size:14px;">Zona de Peligro</div>
+                <button class="btn-primary btn-danger" style="background:var(--danger); color:white;" onclick="if(confirm('¿Estás SEGURO de borrar toda la información? Todos los perfiles, citas y datos locales se perderán para siempre.')) { localStorage.clear(); window.location.reload(); }">
+                    <ion-icon name="trash"></ion-icon> Borrar Todo (Data Fake)
+                </button>
             </div>
             `;
     }
