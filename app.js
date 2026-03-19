@@ -149,7 +149,8 @@ const app = {
     currentView: 'dashboard',
     
     init() {
-        if(db.getPeople().length === 0) {
+        if(!localStorage.getItem('app_initialized') && db.getPeople().length === 0) {
+            localStorage.setItem('app_initialized', 'true');
             const names = ["Carlos Mendoza", "Lucía Fernanda", "Jorge Ramírez", "Sofía Vargas", "Mateo Silva"];
             const msInDay = 86400000;
             const now = Date.now();
