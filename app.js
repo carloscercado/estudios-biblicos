@@ -119,6 +119,12 @@ const db = {
             p.appointmentType = type;
             p.appointmentStudyId = studyId;
             p.notified = false;
+            
+            // Automatic reset from CANCELADO to ACTIVO
+            if (p.status === 'CANCELADO') {
+                p.status = 'ACTIVO';
+            }
+
             this.savePerson(p); 
         }
     },
@@ -340,11 +346,6 @@ const app = {
             }
 
             const person = db.getPerson(personId);
-            if (person.status === 'CANCELADO') {
-                person.status = 'ACTIVO';
-                db.savePerson(person);
-            }
-
             db.setNextAppointment(personId, targetIso, location, type, studyId);
             
             const gCalUrl = utils.getGoogleCalendarUrl(person, targetIso, location, type, studyId);
@@ -372,7 +373,13 @@ const app = {
 
             db.addStudyRecord(personId, studyId, notes);
             
-            app.showToast('Actualizado como: TERMINADO');
+            const updatedP = db.getPerson(personId);
+            if(updatedP.status === 'TERMINADO') {
+                app.showToast('¡Felicidades! Todo TERMINADO');
+            } else {
+                app.showToast('Cita registrada correctamente');
+            }
+
             app.navigate('agenda');
         },
         updateLastStudyNotes(personId, newNotes) {
