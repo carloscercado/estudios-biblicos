@@ -110,6 +110,14 @@ const db = {
         let people = this.getPeople();
         people = people.filter(p => !p.isFake);
         this.set('people', people);
+    },
+    cancelAppointment(personId) {
+        const p = this.getPerson(personId);
+        if(p) {
+            p.nextAppointment = null;
+            p.location = '';
+            this.savePerson(p);
+        }
     }
 };
 
@@ -141,6 +149,25 @@ const utils = {
         const curr = db.getCurriculum();
         const completedIds = person.studies.map(s => s.studyId);
         return curr.find(c => !completedIds.includes(c.id)) || null;
+    },
+    getGoogleCalendarUrl(person, datetime, location, type, studyId) {
+        const start = new Date(datetime);
+        const end = new Date(start.getTime() + 60 * 60 * 1000); // +1 hour
+        
+        const formatGDate = (d) => d.toISOString().replace(/-|:|\.\d\d\d/g, "");
+        
+        let title = `Estudio Bíblico: ${person.name}`;
+        if (type === 'ESTUDIO' && studyId) {
+            const curr = db.getCurriculum();
+            const s = curr.find(x => x.id == studyId);
+            if(s) title = `Estudio: ${s.title} (${person.name})`;
+        } else if (type !== 'ESTUDIO') {
+            title = `${type}: ${person.name}`;
+        }
+
+        const details = `Link/Lugar: ${location || 'No especificado'}\nPersona: ${person.name}\nWhatsApp: ${person.phone}`;
+        
+        return `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${formatGDate(start)}/${formatGDate(end)}&details=${encodeURIComponent(details)}&location=${encodeURIComponent(location || '')}`;
     }
 };
 
@@ -183,102 +210,17 @@ const app = {
             navigator.serviceWorker.register('./sw.js').catch(err => console.error('SW Error:', err));
         }
         
-        if ('Notification' in window && navigator.serviceWorker) {
-            if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
-                Notification.requestPermission();
-            }
-        }
-        
-        this.checkAutomations();
         this.navigate('dashboard');
         
-        setInterval(() => this.checkAutomations(), 600000); // Check every 10 mins
+        // No longer using notification automations
     },
 
     checkAutomations() {
-        const people = db.getPeople();
-        let changed = false;
-        const now = new Date();
-        const todayStr = now.toDateString();
-
-        // Morning Notification (8 AM Mon-Fri | 9 AM Sat)
-        const day = now.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
-        const lastMorning = localStorage.getItem('lastMorningNotificationDate');
-        
-        if (lastMorning !== todayStr) {
-            // Monday - Friday (8 AM) -> Prayer
-            if (day >= 1 && day <= 5 && now.getHours() >= 8) {
-                const candidates = people.filter(p => {
-                    if (p.status !== 'ACTIVO') return false;
-                    if (!p.nextAppointment) return true;
-                    const apptDate = new Date(p.nextAppointment);
-                    const diffDays = (apptDate - now) / (1000 * 60 * 60 * 24);
-                    return diffDays > 7; 
-                });
-                if (candidates.length > 0) {
-                    const chosen = candidates[Math.floor(Math.random() * candidates.length)];
-                    this.showNotification('Tiempo de Oración', `Hoy aparta un tiempo para orar por ${chosen.name}. Dios puede poner algo en tu corazón para él/ella.`);
-                    localStorage.setItem('lastMorningNotificationDate', todayStr);
-                }
-            } 
-            // Saturday (9 AM) -> Spirit invitation
-            else if (day === 6 && now.getHours() >= 9) {
-                 const candidates = people.filter(p => p.status === 'ACTIVO');
-                 if (candidates.length > 0) {
-                    const chosen = candidates[Math.floor(Math.random() * candidates.length)];
-                    const firstName = chosen.name.split(' ')[0];
-                    this.showNotification('Invitación Especial', `Mañana es un día especial para congregarnos. ¿Por qué no invitas a ${firstName} a unirse a la familia de fe? Será un gran tiempo juntos.`);
-                    localStorage.setItem('lastMorningNotificationDate', todayStr);
-                 }
-            }
-        }
-
-        people.forEach(p => {
-            // Automation: 24h passed, status ACTIVO, no history, no appointments -> PAUSA
-            if (p.status === 'ACTIVO' && p.studies.length === 0 && !p.nextAppointment) {
-                if (utils.daysSince(p.startDate) >= 1) { 
-                    p.status = 'EN PAUSA';
-                    db.savePerson(p);
-                    changed = true;
-                    this.showNotification('Aviso Importante', `${p.name} se movió a "EN PAUSA" porque pasaron 24h sin seguimiento.`);
-                }
-            }
-
-            // Automation: Appointment in 1 hour
-            if (p.nextAppointment && !p.notified) {
-                const apptDate = new Date(p.nextAppointment);
-                const diffMs = apptDate - now;
-                const diffMins = Math.floor(diffMs / 60000);
-                
-                if (diffMins > 0 && diffMins <= 60) {
-                    let studyInfo = "";
-                    if (p.appointmentType === 'ESTUDIO' && p.appointmentStudyId) {
-                        const curr = db.getCurriculum();
-                        const s = curr.find(x => x.id === p.appointmentStudyId);
-                        if(s) studyInfo = ` para el estudio de "${s.title}"`;
-                    }
-                    const msg = `En 1 hora verás a ${p.name}${studyInfo}. Detente un momento y pide a Dios sabiduría para enseñar con amor.`;
-                    
-                    this.showNotification('Recordatorio de Cita', msg);
-                    p.notified = true; 
-                    db.savePerson(p);
-                    changed = true;
-                }
-            }
-        });
-        if(changed && this.currentView === 'people') this.navigate('people');
+        // Cleaning up unused notification logic
     },
 
     showNotification(title, body) {
-        if ('Notification' in window && Notification.permission === 'granted' && navigator.serviceWorker) {
-            navigator.serviceWorker.ready.then(reg => {
-                reg.showNotification(title, {
-                    body,
-                    icon: './friends.png',
-                    badge: './friends.png'
-                });
-            });
-        }
+        // Function deprecated as per user request
     },
 
     navigate(view, data = null) {
@@ -372,11 +314,60 @@ const app = {
                 return app.showToast(`Hora ya ocupada por ${clash.name}.`);
             }
 
+            const person = db.getPerson(personId);
+            if (person.status === 'CANCELADO') {
+                person.status = 'ACTIVO';
+                db.savePerson(person);
+            }
+
             db.setNextAppointment(personId, targetIso, location, type, studyId);
             
-            app.showToast('Cita guardada correctamente');
-            if(app.currentView !== 'agenda') app.navigate('detail', personId);
-            else app.navigate('agenda');
+            const gCalUrl = utils.getGoogleCalendarUrl(person, targetIso, location, type, studyId);
+            window.open(gCalUrl, '_blank');
+            
+            app.showToast('Cita guardada y enviada a Google Calendar');
+            app.navigate('agenda');
+        },
+        cancelAppointment(personId) {
+            if(confirm('¿Deseas cancelar esta cita?')) {
+                db.cancelAppointment(personId);
+                app.showToast('Cita cancelada');
+                app.navigate(app.currentView === 'agenda' ? 'agenda' : 'detail', personId);
+            }
+        },
+        markAsDone(personId) {
+            const p = db.getPerson(personId);
+            if(!p || !p.nextAppointment) return;
+
+            const studyId = (p.appointmentType === 'ESTUDIO' && p.appointmentStudyId) ? p.appointmentStudyId : 0;
+            const locationNote = p.location ? ` en ${p.location}` : '';
+            const typeNote = p.appointmentType === 'ESTUDIO' ? 'Estudio' : 'Tiempo de ánimo';
+            const notes = `${typeNote} tenido el ${utils.formatDate(p.nextAppointment)}${locationNote}.`;
+
+            db.addStudyRecord(personId, studyId, notes);
+            
+            // Check for COMPLETADO
+            const curr = db.getCurriculum();
+            const completedIds = p.studies.map(s => s.studyId);
+            const allDone = curr.every(c => completedIds.includes(c.id));
+            if(allDone) {
+                p.status = 'COMPLETADO';
+                db.savePerson(p);
+                app.showToast('¡Felicidades! Todos los estudios completados.');
+            } else {
+                app.showToast('Cita marcada como completada');
+            }
+
+            app.navigate('agenda');
+        },
+        updateLastStudyNotes(personId, newNotes) {
+            const p = db.getPerson(personId);
+            if(p && p.studies.length > 0) {
+                p.studies[p.studies.length - 1].notes = newNotes;
+                db.savePerson(p);
+                app.showToast('Notas actualizadas');
+                app.navigate('detail', personId);
+            }
         },
         openWhatsApp(phone, message = '') {
             const clean = utils.cleanPhone(phone);
@@ -484,7 +475,7 @@ const views = {
          people.sort((a,b) => new Date(b.startDate) - new Date(a.startDate));
          
          html += people.map(p => {
-             const statusClass = p.status === 'TERMINADO' ? 'status-terminado' : (p.status === 'CANCELADO' ? 'status-cancelado' : '');
+             const statusClass = p.status === 'COMPLETADO' ? 'status-completado' : (p.status === 'CANCELADO' ? 'status-cancelado' : '');
              return `
              <div class="person-item ${statusClass}" onclick="app.navigate('detail', '${p.id}')">
                  <div class="person-avatar">${p.name.charAt(0).toUpperCase()}</div>
@@ -547,16 +538,22 @@ const views = {
 
             <div class="section-title">Historial</div>
             ${p.studies.length === 0 ? `<div class="card text-center" style="color:var(--text-muted);">Sin tiempos registrados.</div>` : 
-              [...p.studies].reverse().map(s => {
+              [...p.studies].reverse().map((s, idx, arr) => {
+                  const isLast = idx === 0; // reverse() means index 0 is the original last item
                   const scurr = curr.find(c => c.id === s.studyId);
                   const titleStr = s.studyId === 0 ? "Tiempo de ánimo / Convivencia" : (scurr ? scurr.title : 'Estudio Especial');
+                  
                   return `
-                      <div class="card" style="padding:16px;">
+                      <div class="card" style="padding:16px; ${isLast ? 'border: 1px solid var(--accent);' : ''}">
                           <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
                               <strong style="color:var(--text-main); font-size:15px;">${titleStr}</strong>
                               <span style="font-size:13px; color:var(--text-muted)">${utils.formatDate(s.date)}</span>
                           </div>
-                          <div style="font-size:14px; color:var(--text-muted);">${s.notes || 'Sin anotaciones.'}</div>
+                          ${isLast ? 
+                             `<textarea id="edit-last-notes" class="form-textarea" style="font-size:14px; margin-bottom:10px;">${s.notes || ''}</textarea>
+                              <button class="btn-primary" style="padding:6px 12px; font-size:12px; width:auto;" onclick="app.handlers.updateLastStudyNotes('${p.id}', document.getElementById('edit-last-notes').value)">Actualizar Notas</button>`
+                             : `<div style="font-size:14px; color:var(--text-muted);">${s.notes || 'Sin anotaciones.'}</div>`
+                          }
                       </div>`
               }).join('')
             }
@@ -633,7 +630,7 @@ const views = {
 
         html += items.map(item => {
             const isPast = item.date < new Date();
-            const accent = isPast ? 'var(--danger)' : 'var(--accent)';
+            const accent = isPast ? 'var(--warning)' : 'var(--accent)';
             let aptDetails = item.p.appointmentType;
             if (item.p.appointmentType === 'ESTUDIO' && item.p.appointmentStudyId) {
                 const sItem = curr.find(x => x.id === item.p.appointmentStudyId);
@@ -654,9 +651,11 @@ const views = {
                 <div style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">
                     <ion-icon name="location-outline" style="vertical-align:text-bottom;"></ion-icon> ${item.p.location || 'Por definir'}
                 </div>
-                <div style="display:flex; gap:10px;">
-                    <button class="btn-primary" style="background:${accent}; padding:8px; font-size:13px;" onclick="event.stopPropagation(); app.handlers.openWhatsApp('${item.p.phone}', 'Hola ${firstName}, nos vemos en nuestro tiempo a las ${timeStr}.')"><ion-icon name="logo-whatsapp"></ion-icon> Avisar</button>
-                    <button class="btn-primary" style="background:var(--bg-primary); color:var(--text-main); padding:8px; font-size:13px;" onclick="event.stopPropagation(); app.navigate('detail', '${item.p.id}'); setTimeout(()=>document.getElementById('detail-agenda-card').scrollIntoView(), 100);"><ion-icon name="pencil-outline"></ion-icon> Editar</button>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <button class="btn-primary" style="background:var(--success); padding:8px 12px; font-size:13px; flex:1;" onclick="event.stopPropagation(); app.handlers.openWhatsApp('${item.p.phone}', 'Hola ${firstName}, nos vemos en nuestro tiempo a las ${timeStr}.')"><ion-icon name="logo-whatsapp"></ion-icon> Avisar</button>
+                    <button class="btn-primary" style="background:var(--bg-primary); color:var(--text-main); padding:8px 12px; font-size:13px; flex:1;" onclick="event.stopPropagation(); app.navigate('detail', '${item.p.id}'); setTimeout(()=>document.getElementById('detail-agenda-card').scrollIntoView(), 100);"><ion-icon name="pencil-outline"></ion-icon> Editar</button>
+                    <button class="btn-primary" style="background:var(--danger); padding:8px 12px; font-size:13px; flex:1;" onclick="event.stopPropagation(); app.handlers.cancelAppointment('${item.p.id}')"><ion-icon name="close-circle-outline"></ion-icon> Cancelar</button>
+                    ${isPast ? `<button class="btn-primary" style="background:var(--accent); padding:8px 12px; font-size:13px; flex:100%; margin-top:5px;" onclick="event.stopPropagation(); app.handlers.markAsDone('${item.p.id}')"><ion-icon name="checkmark-circle-outline"></ion-icon> Marcado como Listo</button>` : ''}
                 </div>
             </div>`
         }).join('');

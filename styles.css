@@ -157,10 +157,10 @@ body {
 .person-info { flex: 1; overflow: hidden; }
 .person-name { font-weight: 600; font-size: 16px; margin-bottom: 2px; letter-spacing: -0.3px; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
 .person-meta { font-size: 13px; color: var(--text-muted); }
-.person-item.status-terminado { background-color: #d4edda; border: 1px solid var(--success); }
+.person-item.status-completado { background-color: #d4edda; border: 1px solid var(--success); }
 .person-item.status-cancelado { background-color: #f8d7da; border: 1px solid var(--danger); }
-.person-item.status-terminado .person-name, .person-item.status-cancelado .person-name { color: #000; }
-.person-item.status-terminado .person-meta, .person-item.status-cancelado .person-meta { color: #444; }
+.person-item.status-completado .person-name, .person-item.status-cancelado .person-name { color: #000; }
+.person-item.status-completado .person-meta, .person-item.status-cancelado .person-meta { color: #444; }
 
 .whatsapp-btn {
   background: var(--success); color: white; border: none;

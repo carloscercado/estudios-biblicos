@@ -32,24 +32,4 @@ self.addEventListener('fetch', event => {
     );
 });
 
-self.addEventListener('push', event => {
-    let data = {};
-    try { data = event.data ? event.data.json() : {}; } catch(e) {}
-    
-    const title = data.title || 'Recordatorio de Cita';
-    const options = {
-        body: data.body || 'Tienes un estudio próximo programado.',
-        icon: './friends.png',
-        badge: './friends.png',
-        vibrate: [100, 50, 100],
-        data: { url: data.url || '/' }
-    };
-    event.waitUntil(self.registration.showNotification(title, options));
-});
-
-self.addEventListener('notificationclick', event => {
-    event.notification.close();
-    event.waitUntil(
-        clients.openWindow(event.notification.data.url || '/')
-    );
-});
+// Push and Notification Click listeners removed as per user request
