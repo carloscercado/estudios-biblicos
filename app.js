@@ -95,7 +95,19 @@ const db = {
         const p = this.getPerson(personId);
         if(p) {
             p.studies.push({ studyId, date: new Date().toISOString(), notes });
-            p.nextAppointment = null; 
+            p.nextAppointment = null;
+            p.location = '';
+            p.appointmentType = '';
+            p.appointmentStudyId = null;
+            p.notified = false;
+
+            // Check if all studies in curriculum are done
+            const curr = this.getCurriculum();
+            const completedIds = p.studies.map(s => s.studyId);
+            const allDone = curr.every(c => completedIds.includes(c.id));
+            if(allDone) {
+                p.status = 'TERMINADO';
+            }
             this.savePerson(p);
         }
     },
@@ -178,7 +190,7 @@ const utils = {
             title = `${type}: ${person.name}`;
         }
 
-        const details = `Link/Lugar: ${location || 'No especificado'}\nPersona: ${person.name}\nWhatsApp: ${person.phone}`;
+        const details = `Lugar: ${location || 'No especificado'}\nPersona: ${person.name}\nWhatsApp: ${person.phone}\n\n*Recuerda pedir sabiduría para enseñar con amor.`;
         
         return `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${formatGDate(start)}/${formatGDate(end)}&details=${encodeURIComponent(details)}&location=${encodeURIComponent(location || '')}`;
     }
@@ -338,8 +350,9 @@ const app = {
             const gCalUrl = utils.getGoogleCalendarUrl(person, targetIso, location, type, studyId);
             window.open(gCalUrl, '_blank');
             
-            app.showToast('Cita agendada (Status: Activo)');
-            app.navigate('agenda');
+            app.showToast('Cita agendada');
+            // Small delay to ensure window.open finishes before navigating
+            setTimeout(() => app.navigate('agenda'), 100);
         },
         cancelAppointment(personId) {
             if(confirm('¿Deseas cancelar esta cita?')) {
@@ -359,18 +372,7 @@ const app = {
 
             db.addStudyRecord(personId, studyId, notes);
             
-            // Check for TERMINADO
-            const curr = db.getCurriculum();
-            const completedIds = p.studies.map(s => s.studyId);
-            const allDone = curr.every(c => completedIds.includes(c.id));
-            if(allDone) {
-                p.status = 'TERMINADO';
-                db.savePerson(p);
-                app.showToast('¡Felicidades! Todo terminado.');
-            } else {
-                app.showToast('Cita realizada');
-            }
-
+            app.showToast('Actualizado como: TERMINADO');
             app.navigate('agenda');
         },
         updateLastStudyNotes(personId, newNotes) {
@@ -493,7 +495,8 @@ const views = {
          if(people.length === 0) return html + `<div class="card">No hay personas registradas.</div>`;
          
          const curriculumCache = db.getCurriculum();
-         people.sort((a,b) => new Date(b.startDate) - new Date(a.startDate));
+         // Sort by startDate - Oldest first (Registros iniciales arriba)
+         people.sort((a,b) => new Date(a.startDate) - new Date(b.startDate));
          
          html += people.map(p => {
              const statusClass = p.status === 'TERMINADO' ? 'status-terminado' : (p.status === 'CANCELADO' ? 'status-cancelado' : '');
@@ -675,10 +678,10 @@ const views = {
                     <ion-icon name="location-outline" style="vertical-align:text-bottom;"></ion-icon> ${item.p.location || 'Por definir'}
                 </div>
                 <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                    <button class="btn-primary" style="background:var(--success); padding:8px 12px; font-size:13px; flex:1;" onclick="event.stopPropagation(); app.handlers.openWhatsApp('${item.p.phone}', 'Hola ${firstName}, nos vemos en nuestro tiempo a las ${timeStr}.')"><ion-icon name="logo-whatsapp"></ion-icon> Avisar</button>
-                    <button class="btn-primary" style="background:var(--bg-primary); color:var(--text-main); padding:8px 12px; font-size:13px; flex:1;" onclick="event.stopPropagation(); app.navigate('detail', '${item.p.id}'); setTimeout(()=>document.getElementById('detail-agenda-card').scrollIntoView(), 100);"><ion-icon name="pencil-outline"></ion-icon> Editar</button>
-                    <button class="btn-primary" style="background:var(--danger); padding:8px 12px; font-size:13px; flex:1;" onclick="event.stopPropagation(); app.handlers.cancelAppointment('${item.p.id}')"><ion-icon name="close-circle-outline"></ion-icon> Cancelar</button>
-                    ${isPast ? `<button class="btn-primary" style="background:var(--accent); padding:8px 12px; font-size:13px; flex:100%; margin-top:5px;" onclick="event.stopPropagation(); app.handlers.markAsDone('${item.p.id}')"><ion-icon name="checkmark-circle-outline"></ion-icon> Marcado como Listo</button>` : ''}
+                    <button class="btn-success" style="padding:8px 12px; font-size:13px; flex:1;" onclick="event.stopPropagation(); app.handlers.openWhatsApp('${item.p.phone}', 'Hola ${firstName}, nos vemos en nuestro tiempo a las ${timeStr}.')"><ion-icon name="logo-whatsapp"></ion-icon> Avisar</button>
+                    <button class="btn-secondary" style="padding:8px 12px; font-size:13px; flex:1;" onclick="event.stopPropagation(); app.navigate('detail', '${item.p.id}'); setTimeout(()=>document.getElementById('detail-agenda-card').scrollIntoView(), 100);"><ion-icon name="pencil-outline"></ion-icon> Editar</button>
+                    <button class="btn-danger" style="padding:8px 12px; font-size:13px; flex:1;" onclick="event.stopPropagation(); app.handlers.cancelAppointment('${item.p.id}')"><ion-icon name="close-circle-outline"></ion-icon> Cancelar</button>
+                    ${isPast ? `<button class="btn-primary" style="padding:10px; font-size:14px; flex:100%; margin-top:5px;" onclick="event.stopPropagation(); app.handlers.markAsDone('${item.p.id}')"><ion-icon name="checkmark-circle-outline"></ion-icon> Marcar como Listo</button>` : ''}
                 </div>
             </div>`
         }).join('');
