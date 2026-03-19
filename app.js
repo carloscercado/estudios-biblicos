@@ -20,14 +20,13 @@ const DAILY_VERSES = [
 ];
 
 const FOLLOWUP_RECOMMANDATIONS = [
-    "Escribe a alguien que falto a su último estudio: 'Te extrañamos, espero estés bien'.",
-    "Pide a Dios hoy sabiduría específica para el próximo tema que vas a enseñar.",
-    "Revisa tu lista de 'En Pausa' y envía un versículo de ánimo a uno de ellos.",
-    "Ora por fortaleza para la persona que tiene más dificultades en el discipulado.",
-    "Asegúrate de que cada persona activa tenga su próxima fecha agendada.",
-    "Pregunta a tu discípulo: '¿Cómo puedo orar por ti especialmente esta semana?'",
-    "Comparte un testimonio corto de lo que Dios hizo en tu vida esta semana.",
-    "Invita a alguien a un tiempo de café informal, fuera de la estructura del estudio."
+    "**Conexión Genuina:** Escribe a esta persona hoy mismo preguntando cómo estuvo su día. No menciones el estudio bíblico, solo interésate genuinamente por su bienestar para fortalecer la amistad y la confianza.",
+    "**Preparación Espiritual:** Antes del próximo encuentro, dedica 10 minutos a orar específicamente por la necesidad que te compartió la última vez. Dios puede poner una palabra de sabiduría fresca en tu corazón para él/ella.",
+    "**Ánimo Inesperado:** Revisa tu lista de 'En Pausa' y envía un versículo que te haya hablado hoy. Un simple mensaje como 'Me acordé de ti hoy con esta promesa' puede ser la chispa que reactive su hambre espiritual.",
+    "**Petición Directa:** Pregunta en tu próxima charla: '¿Cómo puedo orar por ti especialmente esta semana?'. Escucha con atención y hazle saber que estarás intercediendo en tus tiempos privados con Dios.",
+    "**Testimonio Vivo:** Comparte una victoria corta o algo pequeño que Dios hizo en tu vida esta semana. Los testimonios personales son herramientas poderosas que humanizan el discipulado y aumentan la fe.",
+    "**Ambiente Informal:** Invita a la persona a un café o una comida sencilla sin la presión del currículo. Estos tiempos de convivencia informal a menudo abren puertas para temas profundos que no surgen en el estudio regular.",
+    "**Acompañamiento:** Si notas que la persona está pasando un momento difícil, ofrécete a acompañarla en alguna tarea cotidiana o simplemente a estar allí. El servicio práctico es el lenguaje del discipulado auténtico."
 ];
 
 const NO_APPT_SUGGESTIONS = [
@@ -176,6 +175,16 @@ const utils = {
         return Math.floor(ms / (1000 * 60 * 60 * 24));
     },
     cleanPhone(phone) { return phone.replace(/\D/g, ''); },
+    toLocalDatetimeValue(dateStr) {
+        if (!dateStr) return '';
+        const d = new Date(dateStr);
+        const pad = n => n < 10 ? '0' + n : n;
+        return d.getFullYear() + '-' + 
+               pad(d.getMonth() + 1) + '-' + 
+               pad(d.getDate()) + 'T' + 
+               pad(d.getHours()) + ':' + 
+               pad(d.getMinutes());
+    },
     getNextStudy(person) {
         const curr = db.getCurriculum();
         const completedIds = person.studies.map(s => s.studyId);
@@ -349,11 +358,16 @@ const app = {
             db.setNextAppointment(personId, targetIso, location, type, studyId);
             
             const gCalUrl = utils.getGoogleCalendarUrl(person, targetIso, location, type, studyId);
-            window.open(gCalUrl, '_blank');
             
-            app.showToast('Cita agendada');
-            // Small delay to ensure window.open finishes before navigating
-            setTimeout(() => app.navigate('agenda'), 100);
+            app.showToast('Abriendo Google Calendar...');
+            
+            // Navigate first to avoid blank screen when coming back
+            app.navigate('agenda');
+            
+            // Open calendar after navigation
+            setTimeout(() => {
+                window.open(gCalUrl, '_blank');
+            }, 500);
         },
         cancelAppointment(personId) {
             if(confirm('¿Deseas cancelar esta cita?')) {
@@ -453,26 +467,19 @@ const views = {
             }
         });
 
-        // Get 3 random suggestions
+        // Get 1 detailed suggestion
         const allSuggestions = [...NO_APPT_SUGGESTIONS, ...HAS_APPT_SUGGESTIONS, ...FOLLOWUP_RECOMMANDATIONS];
-        const sampled = [];
-        const indices = new Set();
-        while(sampled.length < 3 && sampled.length < allSuggestions.length) {
-            let idx = Math.floor(Math.random() * allSuggestions.length);
-            if(!indices.has(idx)) {
-                indices.add(idx);
-                sampled.push(allSuggestions[idx]);
-            }
-        }
+        const randomSugg = allSuggestions[Math.floor(Math.random() * allSuggestions.length)];
         
         const suggestionHtml = `
-            <div class="section-title">Sugerencias de acción</div>
-            ${sampled.map(s => `
-                <div class="card suggestion-item">
-                    <ion-icon name="sparkles" style="color:var(--warning); margin-right:8px;"></ion-icon>
-                    <div style="font-size:14px; color:var(--text-main); line-height:1.4;">${s}</div>
+            <div class="section-title">Enfoque de hoy</div>
+            <div class="card suggestion-item" style="padding:20px; border-left: 5px solid var(--accent);">
+                <div style="display:flex; align-items:center; margin-bottom:10px;">
+                    <ion-icon name="bulb-outline" style="color:var(--accent); font-size:24px; margin-right:10px;"></ion-icon>
+                    <strong style="color:var(--accent); font-size:16px;">Sugerencia estratégica</strong>
                 </div>
-            `).join('')}
+                <div style="font-size:15px; color:var(--text-main); line-height:1.6;">${randomSugg}</div>
+            </div>
         `;
 
         return `
@@ -502,8 +509,8 @@ const views = {
          if(people.length === 0) return html + `<div class="card">No hay personas registradas.</div>`;
          
          const curriculumCache = db.getCurriculum();
-         // Sort by startDate - Oldest first (Registros iniciales arriba)
-         people.sort((a,b) => new Date(a.startDate) - new Date(b.startDate));
+         // Sort by startDate - Newest first (Los últimos agregados arriba)
+         people.sort((a,b) => new Date(b.startDate) - new Date(a.startDate));
          
          html += people.map(p => {
              const statusClass = p.status === 'TERMINADO' ? 'status-terminado' : (p.status === 'CANCELADO' ? 'status-cancelado' : '');
@@ -610,8 +617,8 @@ const views = {
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Fecha y Hora</label>
-                    <input type="datetime-local" id="a-datetime" class="form-input" value="${p.nextAppointment ? p.nextAppointment.slice(0,16) : ''}">
+                    <label class="form-label">¿Cuándo?</label>
+                    <input type="datetime-local" id="a-datetime" class="form-input" value="${utils.toLocalDatetimeValue(p.nextAppointment)}">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Lugar o Link</label>
