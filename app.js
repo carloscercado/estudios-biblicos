@@ -11,10 +11,23 @@ const DEFAULT_CURRICULUM = [
 
 const DAILY_VERSES = [
     { text: "Por tanto, vayan y hagan discípulos de todas las naciones...", ref: "Mateo 28:19 (NVI)" },
-    { text: "A la verdad, no me avergüenzo del evangelio, pues es poder de Dios...", ref: "Romanos 1:16 (NVI)" },
+    { text: "Todo lo puedo en Cristo que me fortalece.", ref: "Filipenses 4:13 (NVI)" },
     { text: "Vayan por todo el mundo y anuncien las buenas nuevas a toda criatura.", ref: "Marcos 16:15 (NVI)" },
-    { text: "Ahora bien, ¿cómo invocarán a aquel en quien no han creído?...", ref: "Romanos 10:14 (NVI)" },
-    { text: "Pero, cuando venga el Espíritu Santo sobre ustedes, recibirán poder...", ref: "Hechos 1:8 (NVI)" }
+    { text: "Tu palabra es una lámpara a mis pies y una luz en mi camino.", ref: "Salmo 119:105 (NVI)" },
+    { text: "Pero, cuando venga el Espíritu Santo sobre ustedes, recibirán poder...", ref: "Hechos 1:8 (NVI)" },
+    { text: "Busquen primeramente el reino de Dios y su justicia...", ref: "Mateo 6:33 (NVI)" },
+    { text: "El amor es paciente, es bondadoso. El amor no es envidioso ni jactancioso...", ref: "1 Corintios 13:4 (NVI)" }
+];
+
+const FOLLOWUP_RECOMMANDATIONS = [
+    "Escribe a alguien que falto a su último estudio: 'Te extrañamos, espero estés bien'.",
+    "Pide a Dios hoy sabiduría específica para el próximo tema que vas a enseñar.",
+    "Revisa tu lista de 'En Pausa' y envía un versículo de ánimo a uno de ellos.",
+    "Ora por fortaleza para la persona que tiene más dificultades en el discipulado.",
+    "Asegúrate de que cada persona activa tenga su próxima fecha agendada.",
+    "Pregunta a tu discípulo: '¿Cómo puedo orar por ti especialmente esta semana?'",
+    "Comparte un testimonio corto de lo que Dios hizo en tu vida esta semana.",
+    "Invita a alguien a un tiempo de café informal, fuera de la estructura del estudio."
 ];
 
 const NO_APPT_SUGGESTIONS = [
@@ -325,7 +338,7 @@ const app = {
             const gCalUrl = utils.getGoogleCalendarUrl(person, targetIso, location, type, studyId);
             window.open(gCalUrl, '_blank');
             
-            app.showToast('Cita guardada y enviada a Google Calendar');
+            app.showToast('Cita agendada (Status: Activo)');
             app.navigate('agenda');
         },
         cancelAppointment(personId) {
@@ -346,16 +359,16 @@ const app = {
 
             db.addStudyRecord(personId, studyId, notes);
             
-            // Check for COMPLETADO
+            // Check for TERMINADO
             const curr = db.getCurriculum();
             const completedIds = p.studies.map(s => s.studyId);
             const allDone = curr.every(c => completedIds.includes(c.id));
             if(allDone) {
-                p.status = 'COMPLETADO';
+                p.status = 'TERMINADO';
                 db.savePerson(p);
-                app.showToast('¡Felicidades! Todos los estudios completados.');
+                app.showToast('¡Felicidades! Todo terminado.');
             } else {
-                app.showToast('Cita marcada como completada');
+                app.showToast('Cita realizada');
             }
 
             app.navigate('agenda');
@@ -419,31 +432,39 @@ const views = {
         
         const people = db.getPeople();
         const activePeople = people.filter(p => p.status === 'ACTIVO');
-        let todayAppointments = 0;
+        
+        let weeklyAppointments = 0;
+        const now = new Date();
+        const nextWeek = new Date(now.getTime() + 7 * 86400000);
 
         people.forEach(p => {
-            if(p.nextAppointment && new Date(p.nextAppointment).toDateString() === new Date().toDateString()) todayAppointments++;
+            if(p.nextAppointment) {
+                const apptDate = new Date(p.nextAppointment);
+                if(apptDate >= now && apptDate <= nextWeek) weeklyAppointments++;
+            }
         });
 
-        let suggestionHtml = '';
-        let suggestionList = todayAppointments === 0 ? NO_APPT_SUGGESTIONS : HAS_APPT_SUGGESTIONS;
-        let suggestionTitle = todayAppointments === 0 ? 'Sugerencia de acción' : 'Ánimo para hoy';
-        let accentColor = todayAppointments === 0 ? 'var(--warning)' : 'var(--success)';
-        let bgColor = todayAppointments === 0 ? 'var(--accent-light)' : '#d4edda';
-
-        let suggestionIndex = parseInt(localStorage.getItem('suggestionIndex') || 0);
-        if(storedDate !== todayStr) {
-            suggestionIndex = Math.floor(Math.random() * suggestionList.length);
-            localStorage.setItem('suggestionIndex', suggestionIndex);
+        // Get 3 random suggestions
+        const allSuggestions = [...NO_APPT_SUGGESTIONS, ...HAS_APPT_SUGGESTIONS, ...FOLLOWUP_RECOMMANDATIONS];
+        const sampled = [];
+        const indices = new Set();
+        while(sampled.length < 3 && sampled.length < allSuggestions.length) {
+            let idx = Math.floor(Math.random() * allSuggestions.length);
+            if(!indices.has(idx)) {
+                indices.add(idx);
+                sampled.push(allSuggestions[idx]);
+            }
         }
         
-        suggestionHtml = `
-        <div class="section-title">${suggestionTitle}</div>
-        <div class="card" style="border-left: 4px solid ${accentColor}; background: ${bgColor};">
-            <div style="font-size:15px; color:var(--text-main); font-weight:500;">
-                ${suggestionList[suggestionIndex]}
-            </div>
-        </div>`;
+        const suggestionHtml = `
+            <div class="section-title">Sugerencias de acción</div>
+            ${sampled.map(s => `
+                <div class="card suggestion-item">
+                    <ion-icon name="sparkles" style="color:var(--warning); margin-right:8px;"></ion-icon>
+                    <div style="font-size:14px; color:var(--text-main); line-height:1.4;">${s}</div>
+                </div>
+            `).join('')}
+        `;
 
         return `
             <div class="verse-card">
@@ -457,8 +478,8 @@ const views = {
                    <div style="font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase;">Activos</div>
                 </div>
                 <div class="card" style="flex:1; margin:0; text-align:center;">
-                   <div style="font-size:26px; font-weight:700; color:var(--success)">${todayAppointments}</div>
-                   <div style="font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase;">Citas Hoy</div>
+                   <div style="font-size:26px; font-weight:700; color:var(--success)">${weeklyAppointments}</div>
+                   <div style="font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase;">En la Semana</div>
                 </div>
             </div>
 
@@ -475,7 +496,7 @@ const views = {
          people.sort((a,b) => new Date(b.startDate) - new Date(a.startDate));
          
          html += people.map(p => {
-             const statusClass = p.status === 'COMPLETADO' ? 'status-completado' : (p.status === 'CANCELADO' ? 'status-cancelado' : '');
+             const statusClass = p.status === 'TERMINADO' ? 'status-terminado' : (p.status === 'CANCELADO' ? 'status-cancelado' : '');
              return `
              <div class="person-item ${statusClass}" onclick="app.navigate('detail', '${p.id}')">
                  <div class="person-avatar">${p.name.charAt(0).toUpperCase()}</div>
@@ -538,22 +559,24 @@ const views = {
 
             <div class="section-title">Historial</div>
             ${p.studies.length === 0 ? `<div class="card text-center" style="color:var(--text-muted);">Sin tiempos registrados.</div>` : 
-              [...p.studies].reverse().map((s, idx, arr) => {
-                  const isLast = idx === 0; // reverse() means index 0 is the original last item
+              [...p.studies].reverse().map((s, idx) => {
+                  const isLast = idx === 0;
                   const scurr = curr.find(c => c.id === s.studyId);
-                  const titleStr = s.studyId === 0 ? "Tiempo de ánimo / Convivencia" : (scurr ? scurr.title : 'Estudio Especial');
+                  const titleStr = s.studyId === 0 ? "Tiempo de ánimo" : (scurr ? scurr.title : 'Estudio');
                   
                   return `
-                      <div class="card" style="padding:16px; ${isLast ? 'border: 1px solid var(--accent);' : ''}">
-                          <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                              <strong style="color:var(--text-main); font-size:15px;">${titleStr}</strong>
-                              <span style="font-size:13px; color:var(--text-muted)">${utils.formatDate(s.date)}</span>
+                      <div class="card history-item">
+                          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                              <div style="flex:1;">
+                                  <div style="font-weight:600; font-size:15px; color:var(--text-main);">${titleStr}</div>
+                                  <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">${utils.formatDate(s.date)}</div>
+                                  ${isLast ? 
+                                     `<div contenteditable="true" class="minimal-edit" onblur="app.handlers.updateLastStudyNotes('${p.id}', this.innerText)">${s.notes || 'Añadir notas...'}</div>`
+                                     : `<div style="font-size:14px; color:var(--text-muted);">${s.notes || 'Sin notas.'}</div>`
+                                  }
+                              </div>
+                              ${isLast ? `<ion-icon name="create-outline" style="color:var(--accent); font-size:18px;"></ion-icon>` : ''}
                           </div>
-                          ${isLast ? 
-                             `<textarea id="edit-last-notes" class="form-textarea" style="font-size:14px; margin-bottom:10px;">${s.notes || ''}</textarea>
-                              <button class="btn-primary" style="padding:6px 12px; font-size:12px; width:auto;" onclick="app.handlers.updateLastStudyNotes('${p.id}', document.getElementById('edit-last-notes').value)">Actualizar Notas</button>`
-                             : `<div style="font-size:14px; color:var(--text-muted);">${s.notes || 'Sin anotaciones.'}</div>`
-                          }
                       </div>`
               }).join('')
             }

@@ -157,10 +157,10 @@ body {
 .person-info { flex: 1; overflow: hidden; }
 .person-name { font-weight: 600; font-size: 16px; margin-bottom: 2px; letter-spacing: -0.3px; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
 .person-meta { font-size: 13px; color: var(--text-muted); }
-.person-item.status-completado { background-color: #d4edda; border: 1px solid var(--success); }
+.person-item.status-terminado { background-color: #d4edda; border: 1px solid var(--success); }
 .person-item.status-cancelado { background-color: #f8d7da; border: 1px solid var(--danger); }
-.person-item.status-completado .person-name, .person-item.status-cancelado .person-name { color: #000; }
-.person-item.status-completado .person-meta, .person-item.status-cancelado .person-meta { color: #444; }
+.person-item.status-terminado .person-name, .person-item.status-cancelado .person-name { color: #000; }
+.person-item.status-terminado .person-meta, .person-item.status-cancelado .person-meta { color: #444; }
 
 .whatsapp-btn {
   background: var(--success); color: white; border: none;
@@ -183,15 +183,33 @@ body {
 .form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: var(--accent); background: var(--bg-secondary); }
 
 .btn-primary {
-  background: var(--accent); color: white; border: none; width: 100%;
-  padding: 16px; border-radius: 12px; font-size: 17px; font-weight: 600;
-  box-shadow: 0 4px 10px rgba(0,122,255,0.2); transition: opacity 0.2s; cursor:pointer;
+  background: var(--bg-secondary); color: var(--accent); border: 1.5px solid var(--accent); width: 100%;
+  padding: 12px; border-radius: 12px; font-size: 15px; font-weight: 600;
+  transition: all 0.2s; cursor:pointer;
   display: flex; align-items: center; justify-content: center; gap: 8px;
+  box-shadow: none;
 }
-.btn-primary:active { opacity: 0.7; }
+.btn-primary:active { background: var(--accent); color: white; }
+
 .btn-danger {
-  background: var(--danger-light); color: var(--danger); box-shadow: none;
+  color: var(--danger); border-color: var(--danger); background: var(--bg-secondary);
 }
+.btn-danger:active { background: var(--danger); color: white; }
+
+/* Dashboard & History Refinements */
+.suggestion-item { 
+  display: flex; align-items: center; padding: 12px 16px; border-left: 3px solid var(--warning);
+}
+
+.history-item { padding: 12px 16px; margin-bottom: 8px; border: 0.5px solid var(--glass-border); }
+
+.minimal-edit {
+  font-size: 14px; color: var(--text-main); margin-top: 4px; padding: 4px 6px;
+  border-radius: 6px; border: 1px dashed transparent; transition: 0.2s;
+  min-height: 24px; outline: none;
+}
+.minimal-edit:focus { border-color: var(--accent); background: var(--bg-primary); }
+.minimal-edit:empty:before { content: attr(placeholder); color: var(--text-muted); }
 
 .list-item-action {
   display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--glass-border);
