@@ -20,31 +20,31 @@ const DAILY_VERSES = [
 ];
 
 const FOLLOWUP_RECOMMANDATIONS = [
-    "**Conexión Genuina:** Escribe a esta persona hoy mismo preguntando cómo estuvo su día. No menciones el estudio bíblico, solo interésate genuinamente por su bienestar para fortalecer la amistad y la confianza.",
-    "**Preparación Espiritual:** Antes del próximo encuentro, dedica 10 minutos a orar específicamente por la necesidad que te compartió la última vez. Dios puede poner una palabra de sabiduría fresca en tu corazón para él/ella.",
-    "**Ánimo Inesperado:** Revisa tu lista de 'En Pausa' y envía un versículo que te haya hablado hoy. Un simple mensaje como 'Me acordé de ti hoy con esta promesa' puede ser la chispa que reactive su hambre espiritual.",
-    "**Petición Directa:** Pregunta en tu próxima charla: '¿Cómo puedo orar por ti especialmente esta semana?'. Escucha con atención y hazle saber que estarás intercediendo en tus tiempos privados con Dios.",
-    "**Testimonio Vivo:** Comparte una victoria corta o algo pequeño que Dios hizo en tu vida esta semana. Los testimonios personales son herramientas poderosas que humanizan el discipulado y aumentan la fe.",
-    "**Ambiente Informal:** Invita a la persona a un café o una comida sencilla sin la presión del currículo. Estos tiempos de convivencia informal a menudo abren puertas para temas profundos que no surgen en el estudio regular.",
-    "**Acompañamiento:** Si notas que la persona está pasando un momento difícil, ofrécete a acompañarla en alguna tarea cotidiana o simplemente a estar allí. El servicio práctico es el lenguaje del discipulado auténtico."
+    { title: "Conexión Genuina", text: "Escribe a esta persona hoy mismo preguntando cómo estuvo su día. No menciones el estudio bíblico, solo interésate genuinamente por su bienestar para fortalecer la amistad y la confianza." },
+    { title: "Preparación Espiritual", text: "Antes del próximo encuentro, dedica 10 minutos a orar específicamente por la necesidad que te compartió la última vez. Dios puede poner una palabra de sabiduría fresca en tu corazón para él/ella." },
+    { title: "Ánimo Inesperado", text: "Revisa tu lista de 'En Pausa' y envía un versículo que te haya hablado hoy. Un simple mensaje como 'Me acordé de ti hoy con esta promesa' puede ser la chispa que reactive su hambre espiritual." },
+    { title: "Petición Directa", text: "Pregunta en tu próxima charla: '¿Cómo puedo orar por ti especialmente esta semana?'. Escucha con atención y hazle saber que estarás intercediendo en tus tiempos privados con Dios." },
+    { title: "Testimonio Vivo", text: "Comparte una victoria corta o algo pequeño que Dios hizo en tu vida esta semana. Los testimonios personales son herramientas poderosas que humanizan el discipulado y aumentan la fe." },
+    { title: "Ambiente Informal", text: "Invita a la persona a un café o una comida sencilla sin la presión del currículo. Estos tiempos de convivencia informal a menudo abren puertas para temas profundos que no surgen en el estudio regular." },
+    { title: "Acompañamiento", text: "Si notas que la persona está pasando un momento difícil, ofrécete a acompañarla en alguna tarea cotidiana o simplemente a estar allí. El servicio práctico es el lenguaje del discipulado auténtico." }
 ];
 
 const NO_APPT_SUGGESTIONS = [
-    "Ora a Dios para que te guíe a alguien que necesite escuchar el Evangelio hoy.",
-    "Comparte tu testimonio o un versículo en tus redes sociales para sembrar la Palabra.",
-    "Llama o escribe a un vecino para saludarlo y buscar una oportunidad de compartir.",
-    "En tu lugar de trabajo o estudio, busca un momento para animar a alguien con la fe.",
-    "Dedica un tiempo extra a interceder por las personas que tienes en pausa.",
-    "Escribe un mensaje de ánimo a 3 contactos que hace tiempo no saludas."
+    { title: "Evangelismo Intencional", text: "Pide a Dios hoy mismo que te guíe con alguien que necesite escuchar el Evangelio. Mantén tus ojos espirituales abiertos para identificar esa oportunidad única de compartir Su amor." },
+    { title: "Semilla Digital", text: "Comparte un testimonio breve o un versículo que haya tocado tu corazón en tus redes sociales hoy. La Palabra de Dios no vuelve vacía y puede ser el sustento que alguien necesita leer ahora." },
+    { title: "Interés Genuino", text: "Llama o escribe a un vecino o conocido solo para saludarlo y saber cómo está. Construir puentes de amistad sincera es el primer paso vital para poder compartir las buenas nuevas después." },
+    { title: "Luz en el Camino", text: "Busca un momento en tu trabajo o lugar de estudio para animar con fe a un compañero que notes cansado o desanimado. Tu actitud y palabras de esperanza pueden marcar la diferencia." },
+    { title: "Intercesión Estratégica", text: "Dedica un tiempo extra hoy para interceder por las personas que tienes en la lista de 'En Pausa'. Pide a Dios que ablande sus corazones y abra una puerta para retomar el estudio." },
+    { title: "Mensaje de Ánimo", text: "Escribe un mensaje corto de aliento a 3 contactos que hace tiempo no saludas. Hazles saber que te acordaste de ellos y que pides bendiciones para sus vidas esta semana." }
 ];
 
 const HAS_APPT_SUGGESTIONS = [
-    "Recuerda que esta es una batalla espiritual; vístete con toda la armadura de Dios (Efesios 6:11).",
-    "Antes de tu cita, dedica 5 minutos a orar específicamente por el corazón de la persona.",
-    "Confía plenamente en el Señor; Él pondrá las palabras adecuadas en tu boca.",
-    "No temas, porque Dios está contigo en este tiempo de enseñanza.",
-    "Deja los resultados en las manos de Dios; tú solo siembra con amor.",
-    "La Palabra de Dios nunca vuelve vacía; ve con fe a compartir hoy."
+    { title: "Victoria Espiritual", text: "Recuerda que esta labor es una batalla espiritual. Antes de tu cita, asegúrate de vestirte con toda la armadura de Dios (Efesios 6:11) para enseñar con autoridad y paz." },
+    { title: "Corazón Preparado", text: "Antes de tu encuentro, dedica 5 minutos exclusivos a orar por el corazón de la persona. Pide que el Espíritu Santo prepare el terreno para que la semilla de la Palabra dé mucho fruto." },
+    { title: "Confianza Plena", text: "Confía totalmente en el Señor para este tiempo de enseñanza. Él ha prometido poner las palabras adecuadas en tu boca en el momento justo; tú solo sé un canal dócil de Su gracia." },
+    { title: "Presencia Divina", text: "No temas ni te sientas insuficiente, porque Dios está contigo en cada palabra que compartas hoy. Su presencia es la que convence de pecado y trae consuelo verdadero al corazón." },
+    { title: "Resultados de Dios", text: "Recuerda que tu misión es sembrar con amor y fidelidad, pero los resultados pertenecen exclusivamente a Dios. Descansa en Su soberanía mientras compartes Su verdad hoy." },
+    { title: "Palabra con Poder", text: "Ve con fe sabiendo que la Palabra de Dios nunca vuelve vacía. Cada versículo que lean juntos tiene el poder de transformar vidas de maneras que a veces no vemos de inmediato." }
 ];
 
 // --- Data Layer ---
@@ -192,17 +192,19 @@ const utils = {
     },
     getGoogleCalendarUrl(person, datetime, location, type, studyId) {
         const start = new Date(datetime);
-        const end = new Date(start.getTime() + 60 * 60 * 1000); // +1 hour
+        const end = new Date(start.getTime() + 60 * 60000); // Always 1 hour
         
         const formatGDate = (d) => d.toISOString().replace(/-|:|\.\d\d\d/g, "");
         
-        let title = `Estudio Bíblico: ${person.name}`;
+        let title = `${type}: ${person.name}`;
         if (type === 'ESTUDIO' && studyId) {
-            const curr = db.getCurriculum();
-            const s = curr.find(x => x.id == studyId);
-            if(s) title = `Estudio: ${s.title} (${person.name})`;
-        } else if (type !== 'ESTUDIO') {
-            title = `${type}: ${person.name}`;
+            const curriculum = db.getCurriculum();
+            const study = curriculum.find(s => s.id === studyId);
+            if (study) {
+                title = `Estudio: ${study.title} - ${person.name}`;
+            }
+        } else if (type === 'TIEMPO DE ÁNIMO') {
+            title = `Ánimo: ${person.name}`;
         }
 
         const details = `Lugar: ${location || 'No especificado'}\nPersona: ${person.name}\nWhatsApp: ${person.phone}\n\n*Recuerda pedir sabiduría para enseñar con amor.`;
@@ -214,8 +216,30 @@ const utils = {
 // --- Main App Logic ---
 const app = {
     currentView: 'dashboard',
+    state: {
+        currentTab: 'home',
+        dailySugg: null,
+    },
     
     init() {
+        app.state.currentTab = 'home';
+        
+        // Handle Visibility Change for Daily Recommendation
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                app.utils.refreshDailySugg();
+                app.render(); // Assuming app.render() exists and re-renders the current view
+            }
+        });
+
+        // Initialize Daily Suggestion
+        const storedSugg = localStorage.getItem('dailySugg');
+        if (storedSugg) {
+            app.state.dailySugg = JSON.parse(storedSugg);
+        } else {
+            app.utils.refreshDailySugg();
+        }
+
         if(!localStorage.getItem('app_initialized') && db.getPeople().length === 0) {
             localStorage.setItem('app_initialized', 'true');
             const names = ["Carlos Mendoza", "Lucía Fernanda", "Jorge Ramírez", "Sofía Vargas", "Mateo Silva"];
@@ -253,6 +277,17 @@ const app = {
         this.navigate('dashboard');
         
         // No longer using notification automations
+    },
+
+    utils: {
+        refreshDailySugg() {
+            const all = [...NO_APPT_SUGGESTIONS, ...HAS_APPT_SUGGESTIONS, ...FOLLOWUP_RECOMMANDATIONS];
+            const pick = all[Math.floor(Math.random() * all.length)];
+            // Handle both string and object recommendations
+            const final = typeof pick === 'string' ? { title: "Sugerencia estratégica", text: pick.replace(/\*\*/g, '') } : pick;
+            app.state.dailySugg = final;
+            localStorage.setItem('dailySugg', JSON.stringify(final));
+        }
     },
 
     checkAutomations() {
@@ -337,6 +372,7 @@ const app = {
         },
         saveAppointment(personId) {
             const datetime = document.getElementById('a-datetime').value;
+            const originalDate = document.getElementById('a-datetime').dataset.original;
             const location = document.getElementById('a-location').value.trim();
             const type = document.getElementById('a-type').value;
             let studyId = null;
@@ -357,17 +393,20 @@ const app = {
             const person = db.getPerson(personId);
             db.setNextAppointment(personId, targetIso, location, type, studyId);
             
-            const gCalUrl = utils.getGoogleCalendarUrl(person, targetIso, location, type, studyId);
+            // Only open GCal if date/time changed
+            const isDateChanged = targetIso !== originalDate;
             
-            app.showToast('Abriendo Google Calendar...');
-            
-            // Navigate first to avoid blank screen when coming back
-            app.navigate('agenda');
-            
-            // Open calendar after navigation
-            setTimeout(() => {
-                window.open(gCalUrl, '_blank');
-            }, 500);
+            if (isDateChanged) {
+                const gCalUrl = utils.getGoogleCalendarUrl(person, targetIso, location, type, studyId);
+                app.showToast('Actualizando Google Calendar...');
+                app.navigate('agenda');
+                setTimeout(() => {
+                    window.open(gCalUrl, '_blank');
+                }, 500);
+            } else {
+                app.showToast('Cambios guardados');
+                app.navigate('agenda');
+            }
         },
         cancelAppointment(personId) {
             if(confirm('¿Deseas cancelar esta cita?')) {
@@ -382,8 +421,14 @@ const app = {
 
             const studyId = (p.appointmentType === 'ESTUDIO' && p.appointmentStudyId) ? p.appointmentStudyId : 0;
             const locationNote = p.location ? ` en ${p.location}` : '';
-            const typeNote = p.appointmentType === 'ESTUDIO' ? 'Estudio' : 'Tiempo de ánimo';
-            const notes = `${typeNote} tenido el ${utils.formatDate(p.nextAppointment)}${locationNote}.`;
+            
+            let typeNote = 'Tiempo de ánimo';
+            if (p.appointmentType === 'ESTUDIO') {
+                const currItem = db.getCurriculum().find(c => c.id === studyId);
+                typeNote = currItem ? `Estudio: ${currItem.title}` : 'Estudio';
+            }
+            
+            const notes = `${typeNote} realizado el ${utils.formatDate(p.nextAppointment)}${locationNote}.`;
 
             db.addStudyRecord(personId, studyId, notes);
             
@@ -454,49 +499,42 @@ const views = {
         const verse = DAILY_VERSES[storedIndex] || DAILY_VERSES[0];
         
         const people = db.getPeople();
-        const activePeople = people.filter(p => p.status === 'ACTIVO');
+        const activeCount = people.filter(p => p.status === 'ACTIVO').length;
         
-        let weeklyAppointments = 0;
         const now = new Date();
         const nextWeek = new Date(now.getTime() + 7 * 86400000);
+        const weeklyAppointments = people.filter(p => p.nextAppointment && new Date(p.nextAppointment) >= now && new Date(p.nextAppointment) <= nextWeek).length;
 
-        people.forEach(p => {
-            if(p.nextAppointment) {
-                const apptDate = new Date(p.nextAppointment);
-                if(apptDate >= now && apptDate <= nextWeek) weeklyAppointments++;
-            }
-        });
-
-        // Get 1 detailed suggestion
-        const allSuggestions = [...NO_APPT_SUGGESTIONS, ...HAS_APPT_SUGGESTIONS, ...FOLLOWUP_RECOMMANDATIONS];
-        const randomSugg = allSuggestions[Math.floor(Math.random() * allSuggestions.length)];
-        
         const suggestionHtml = `
             <div class="section-title">Enfoque de hoy</div>
-            <div class="card suggestion-item" style="padding:20px; border-left: 5px solid var(--accent);">
-                <div style="display:flex; align-items:center; margin-bottom:10px;">
-                    <ion-icon name="bulb-outline" style="color:var(--accent); font-size:24px; margin-right:10px;"></ion-icon>
-                    <strong style="color:var(--accent); font-size:16px;">Sugerencia estratégica</strong>
-                </div>
-                <div style="font-size:15px; color:var(--text-main); line-height:1.6;">${randomSugg}</div>
+            <div class="card suggestion-item" style="padding:24px; border-left: 5px solid var(--accent); display:block; width:100%; box-sizing:border-box; margin-bottom:20px;">
+                <div style="font-size:13px; color:var(--accent); font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;">${app.state.dailySugg?.title || 'Sugerencia'}</div>
+                <div style="font-size:16px; color:var(--text-main); line-height:1.6; width:100%; font-weight:400;">${app.state.dailySugg?.text || ''}</div>
             </div>
         `;
 
         return `
-            <div class="verse-card">
-                <div class="verse-text">"${verse.text}"</div>
-                <div class="verse-ref">${verse.ref}</div>
+            <header class="header">
+                <h1 style="letter-spacing:2px;">SÍGUEME</h1>
+                <p>Discípulos que permanecen</p>
+            </header>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:24px;">
+                <div class="card" style="flex:1; margin:0; text-align:center; cursor:pointer; padding:20px; border:1px solid var(--glass-border);" 
+                     onclick="${activeCount > 0 ? "app.navigate('people')" : ""}">
+                   <div style="font-size:28px; font-weight:800; color:var(--accent); margin-bottom:4px;">${activeCount}</div>
+                   <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.3px;">Discípulos Activos</div>
+                </div>
+                <div class="card" style="flex:1; margin:0; text-align:center; cursor:pointer; padding:20px; border:1px solid var(--glass-border);" 
+                     onclick="${weeklyAppointments > 0 ? "app.navigate('agenda')" : ""}">
+                   <div style="font-size:28px; font-weight:800; color:var(--success); margin-bottom:4px;">${weeklyAppointments}</div>
+                   <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.3px;">Citas en la Semana</div>
+                </div>
             </div>
 
-            <div style="display:flex; gap: 12px; margin: 20px 0;">
-                <div class="card" style="flex:1; margin:0; text-align:center;">
-                   <div style="font-size:26px; font-weight:700; color:var(--accent)">${activePeople.length}</div>
-                   <div style="font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase;">Activos</div>
-                </div>
-                <div class="card" style="flex:1; margin:0; text-align:center;">
-                   <div style="font-size:26px; font-weight:700; color:var(--success)">${weeklyAppointments}</div>
-                   <div style="font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase;">En la Semana</div>
-                </div>
+            <div class="verse-card" style="margin-bottom:24px; background:var(--bg-secondary);">
+                <div class="verse-text" style="font-style:italic; opacity:0.9;">"${verse.text}"</div>
+                <div class="verse-ref" style="font-weight:700; color:var(--accent);">${verse.ref}</div>
             </div>
 
             ${suggestionHtml}
@@ -618,7 +656,9 @@ const views = {
 
                 <div class="form-group">
                     <label class="form-label">¿Cuándo?</label>
-                    <input type="datetime-local" id="a-datetime" class="form-input" value="${utils.toLocalDatetimeValue(p.nextAppointment)}">
+                    <input type="datetime-local" id="a-datetime" class="form-input" 
+                           data-original="${p.nextAppointment || ''}"
+                           value="${utils.toLocalDatetimeValue(p.nextAppointment)}">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Lugar o Link</label>
